@@ -4,3 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+color-eyre = "0.6.3"
+crossterm = "0.29.0"
+ratatui = "0.30.2"
+sqlite = "*"
+tokio = { version = "1.11.0", features = ["full"] }
+futures = "0.3.5"
+tui = { version = "0.15.0", features = ["crossterm"], default-features = false }
+anyhow = "1.0.38"
