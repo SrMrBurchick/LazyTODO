@@ -59,6 +59,14 @@ pub struct CompleteCommand {
 }
 
 #[derive(Default)]
+pub struct UpdateCommand {
+    pub target: String,
+    pub id: i64,
+    pub title: String,
+    pub description: String
+}
+
+#[derive(Default)]
 pub struct DeleteCommand {
     pub target: String,
     pub id: i64,
@@ -98,6 +106,36 @@ impl CliCommand for AddCommand {
         Ok(())
     }
 }
+
+impl CliCommand for UpdateCommand {
+    fn construct(&mut self, args: &[String]) {
+        self.target = args[2].clone();
+        self.id = args[3].parse::<i64>().unwrap();
+        self.title = args[4].clone();
+        self.description = args[5].clone();
+    }
+
+    fn execute(&self, database: &Database) -> Result<(), String> {
+        match self.target.as_str() {
+            TASK => {
+                database.update_task(self.id, &self.title, &self.description);
+            }
+            PROJECT_TASK => {
+                database.update_task(self.id, &self.title, &self.description);
+            }
+            PROJECT => {
+            }
+            SUBTASK => {
+                database.update_sub_task(self.id, &self.title, &self.description);
+            }
+            _ => {
+                return Err("Invalid target".to_string());
+            }
+        }
+        Ok(())
+    }
+}
+
 
 impl CliCommand for CompleteCommand {
     fn construct(&mut self, args: &[String]) {
@@ -210,6 +248,9 @@ pub fn create_command(command: &str) -> Box<dyn CliCommand> {
         }
         LIST => {
             Box::new(ListCommand::default())
+        }
+        UPDATE => {
+            Box::new(UpdateCommand::default())
         }
         _ => {
             Box::new(UnknownCommand)

@@ -1,9 +1,4 @@
 UPDATE Tasks
-SET title = newTitle,
-    description = newDescription
-WHERE id = targetId
-VALUES(
-    :targetId,
-    :newTitle,
-    :newDescription
-)
+SET title = :newTitle,
+    description = :newDescription
+WHERE id = :targetId;

@@ -538,10 +538,66 @@ impl Database {
         }
     }
 
+    pub fn update_task(&self, id: i64, title: &str, description: &str) {
+        match &self.connection {
+            Some(connection) => {
+                match connection.prepare(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), env!("SQL_UPDATE_TASK")))) {
+                    Ok(mut statement) => {
+                        statement.bind((":targetId", id)).unwrap();
+                        statement.bind((":newTitle", title)).unwrap();
+                        statement.bind((":newDescription", description)).unwrap();
+                        match statement.next() {
+                            Ok(_) => {
+                                println!("Tasks {id} was updated successfully");
+                            },
+                            Err(e) => {
+                                eprintln!("Failed to update task for {id} {e}");
+                            },
+                        }
+                    },
+                    Err(e) => {
+                        eprintln!("Failed to create statement {e}");
+                    },
+                }
+            },
+            None => {
+                eprintln!("Invalid connection");
+            },
+        }
+    }
+
+    pub fn update_sub_task(&self, id: i64, title: &str, description: &str) {
+        match &self.connection {
+            Some(connection) => {
+                match connection.prepare(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), env!("SQL_UPDATE_TASK")))) {
+                    Ok(mut statement) => {
+                        statement.bind((":targetId", id)).unwrap();
+                        statement.bind((":newTitle", title)).unwrap();
+                        statement.bind((":newDescription", description)).unwrap();
+                        match statement.next() {
+                            Ok(_) => {
+                                println!("Tasks {id} was updated successfully");
+                            },
+                            Err(e) => {
+                                eprintln!("Failed to update task for {id} {e}");
+                            },
+                        }
+                    },
+                    Err(e) => {
+                        eprintln!("Failed to create statement {e}");
+                    },
+                }
+            },
+            None => {
+                eprintln!("Invalid connection");
+            },
+        }
+    }
+
     pub fn update_task_state(&self, id: i64, state: ETaskState) {
         match &self.connection {
             Some(connection) => {
-                match connection.prepare(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), env!("SQL_UPDATE_TASK_STATE")))) {
+                match connection.prepare(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), env!("SQL_UPDATE_SUB_TASK")))) {
                     Ok(mut statement) => {
                         statement.bind((":targetId", id)).unwrap();
                         statement.bind((":newState", state as i64)).unwrap();
