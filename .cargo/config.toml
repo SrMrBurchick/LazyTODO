@@ -1,0 +1,31 @@
+
+[env]
+DEFAULT_DATABASE = "LazyTODO.db"
+DEFAULT_CONFIG = "LazyTODO.conf.json"
+SQL_TABLES = "/src/sql/tables.sql"
+SQL_VIEWS = "/src/sql/views.sql"
+
+# Procedures
+SQL_CREATE_PROJECT = "/src/sql/procedures/projects/create.sql"
+SQL_DELETE_PROJECT = "/src/sql/procedures/projects/delete.sql"
+SQL_UPDATE_PROJECT = "/src/sql/procedures/projects/update.sql"
+SQL_CREATE_TASK = "/src/sql/procedures/tasks/create.sql"
+SQL_DELETE_TASK = "/src/sql/procedures/tasks/delete.sql"
+SQL_DELETE_TASK_BY_PROJECT = "/src/sql/procedures/projects/delete_tasks_by_project.sql"
+SQL_DELETE_SUBTASK_BY_PROJECT = "/src/sql/procedures/projects/delete_subtasks_by_project.sql"
+SQL_UPDATE_TASK = "/src/sql/procedures/tasks/update.sql"
+SQL_UPDATE_TASK_STATE = "/src/sql/procedures/tasks/update_state.sql"
+SQL_CREATE_SUB_TASK = "/src/sql/procedures/subtasks/create.sql"
+SQL_DELETE_SUB_TASK = "/src/sql/procedures/subtasks/delete.sql"
+SQL_DELETE_SUB_TASK_BY_PARENT = "/src/sql/procedures/subtasks/delete_by_parent_id.sql"
+SQL_UPDATE_SUB_TASK = "/src/sql/procedures/subtasks/update.sql"
+SQL_UPDATE_SUB_TASK_STATE = "/src/sql/procedures/subtasks/update_state.sql"
+
+SQL_VIEW_GET_SUB_TASKS_BY_PARENT = "/src/sql/views/view_get_subtasks.sql"
+SQL_VIEW_GET_TASKS_BY_PROJECT = "/src/sql/views/view_get_project_tasks.sql"
+
+# Views
+SQL_VIEW_GET_NON_PROJECT_TASKS = "v_GetNonProjectTasks"
+SQL_VIEW_GET_PROJECT_TASKS = "v_GetProjectTasks"
+SQL_VIEW_GET_SUB_TASKS = "v_GetSubTasks"
+SQL_VIEW_GET_PROJECTS = "v_GetProjects"

@@ -1,6 +1,6 @@
 [package]
 name = "LazyTODO"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2024"
 
 [dependencies]
@@ -12,3 +12,6 @@ tokio = { version = "1.11.0", features = ["full"] }
 futures = "0.3.5"
 tui = { version = "0.15.0", features = ["crossterm"], default-features = false }
 anyhow = "1.0.38"
+json = "*"
+
+
