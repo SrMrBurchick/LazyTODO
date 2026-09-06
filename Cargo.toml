@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 color-eyre = "0.6.3"
-crossterm = "0.29.0"
+crossterm = { version = "0.29.0", features = ["event-stream"] }
 ratatui = "0.30.2"
 sqlite = "*"
 tokio = { version = "1.11.0", features = ["full"] }

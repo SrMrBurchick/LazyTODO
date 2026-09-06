@@ -1,21 +1,23 @@
+use std::clone;
+
 use crate::{
-    app::{commands::create_command, managers::project_manager::ProjectManager, ui::{app_widget::AppWidget, base::widget_list::WidgetListItem}}, core::{config::Config, database_manager::Database}
+    app::{base::Target, commands::create_command, events::{DatabaseRequest, Request, Response}, managers::project_manager::ProjectManager, ui::{app_widget::AppWidget, base::widget_list::WidgetListItem}, workers::{base::worker::Worker, database_worker::DatabaseWorker}}, core::{config::Config, database_manager::Database}
 };
 
+use tokio::sync::mpsc;
+
 pub struct App {
-    database: Database,
     config: Config,
 }
 
 impl App {
     pub fn new() -> App {
         App {
-            database: Database::default(),
             config: Config::new(),
         }
     }
 
-    pub fn run(&mut self) {
+    pub async fn run(&mut self) {
         self.initialize();
 
         // Test CLI
@@ -24,9 +26,11 @@ impl App {
             let title = env!("CARGO_PKG_NAME");
             let version = env!("CARGO_PKG_VERSION");
             println!("{title} {version}");
+            let mut database = Database::default();
+            database.initialize();
             let mut command = create_command(args[1].as_str());
             command.construct(&args);
-            match command.execute(&self.database) {
+            match command.execute(&mut database) {
                 Ok(_) => {
                     println!("Done");
                 },
@@ -35,17 +39,41 @@ impl App {
                 },
             }
         } else {
-            let mut app_widget = AppWidget::default();
-            match self.database.list_projects() {
-                Ok(projects) => {
-                    app_widget.list.items = projects[0].tasks.iter().cloned().map(|task| Box::new(task) as Box<dyn WidgetListItem>).collect();
-                },
-                Err(_) => {},
-            }
+            let (request_tx, request_rx) = mpsc::channel::<Request>(32);
+            let (response_tx, response_rx) = mpsc::channel::<Response>(32);
 
-            //
-            match ratatui::run(|terminal| app_widget.run(terminal)) {
-                _ => {},
+            let app_widget = AppWidget::new(request_tx, response_rx);
+            let mut terminal = ratatui::init();
+
+            tokio::spawn(async move {
+                App::setup_workers(response_tx, request_rx).await;
+            });
+
+
+            app_widget.run(&mut terminal).await;
+
+            ratatui::restore();
+        }
+    }
+
+    async fn setup_workers(tx: mpsc::Sender<Response>, mut rx: mpsc::Receiver<Request>) {
+        let mut database = Database::default();
+        database.initialize();
+        let database_worker = DatabaseWorker::new(database);
+
+        while let Some(request) = rx.recv().await {
+            match request.clone() {
+                Request::Database(_) => {
+                    match database_worker.handle_request(request.clone()) {
+                        Ok(response) => {
+                            tx.send(response).await;
+                        },
+                        Err(_) => {},
+                    }
+                }
+                Request::Exit => {
+                    return;
+                }
             }
         }
     }
@@ -53,6 +81,5 @@ impl App {
     // Load config data
     fn initialize(&mut self) {
         self.config.init();
-        self.database.initialize();
     }
 }

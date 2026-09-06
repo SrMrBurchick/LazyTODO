@@ -10,13 +10,20 @@ use ratatui::widgets::{
     StatefulWidget, Widget, Wrap,
 };
 use ratatui::{DefaultTerminal, symbols};
+use tokio::sync::mpsc;
 
+use crate::app::base::Target;
 use crate::app::base::projects::Project;
-use crate::app::ui::base::widget_list::WidgetList;
+use crate::app::events::{DatabaseRequest, Request, Response};
+use crate::app::ui::base::widget_list::{WidgetList, WidgetListItem};
 use crate::app::ui::styles;
+use crossterm::event::{Event, EventStream};
+use futures::StreamExt;
 
 pub struct AppWidget {
     pub list: WidgetList,
+    sender: mpsc::Sender<Request>,
+    receiver: mpsc::Receiver<Response>,
     should_exit: bool
 }
 
@@ -29,24 +36,73 @@ const fn alternate_colors(i: usize) -> Color {
 }
 
 impl AppWidget {
-    pub fn run(mut self, terminal: &mut DefaultTerminal) -> Result<()> {
-        while !self.should_exit {
-            terminal.draw(|frame| frame.render_widget(&mut self, frame.area()))?;
-            if let Some(key) = event::read()?.as_key_press_event() {
-                self.handle_key(key);
-            }
+    pub fn new(tx: mpsc::Sender<Request>, rx: mpsc::Receiver<Response>) -> Self {
+        AppWidget {
+            list: WidgetList::default(),
+            sender: tx,
+            receiver: rx,
+            should_exit: false
         }
-        Ok(())
     }
 
-    fn handle_key(&mut self, key: KeyEvent) {
+    pub async fn run(mut self, terminal: &mut DefaultTerminal) {
+        let mut input = EventStream::new();
+
+        while !self.should_exit {
+            match terminal.draw(|frame| frame.render_widget(&mut self, frame.area())) {
+                Ok(_) => {},
+                Err(_) => {
+                    return;
+                },
+            };
+            tokio::select! {
+                input_event = input.next() => {
+                    if let Some(Ok(Event::Key(key))) = input_event {
+                        if key.is_press() {
+                            self.handle_key(key).await;
+                        }
+                    }
+                }
+
+                response = self.receiver.recv() => {
+                    if let Some(response) = response {
+                        self.handle_response(response);
+                    }
+                }
+            }
+        }
+    }
+
+    fn handle_response(&mut self, response: Response) {
+        match response {
+            Response::Database(database_response) => {
+                match database_response {
+                    crate::app::events::DatabaseResponse::Projects(projects) => {
+                        self.list.items = projects[0].tasks.iter().cloned().map(|task| Box::new(task) as Box<dyn WidgetListItem>).collect();
+                    }
+                    _ => {},
+                }
+            }
+            _ => {
+
+            }
+        }
+    }
+
+    async fn handle_key(&mut self, key: KeyEvent) {
         match key.code {
-            KeyCode::Char('q') | KeyCode::Esc => self.should_exit = true,
+            KeyCode::Char('q') | KeyCode::Esc => {
+                self.sender.send(Request::Exit).await;
+                self.should_exit = true
+            },
             KeyCode::Char('h') | KeyCode::Left => self.select_none(),
             KeyCode::Char('j') | KeyCode::Down => self.select_next(),
             KeyCode::Char('k') | KeyCode::Up => self.select_previous(),
             KeyCode::Char('g') | KeyCode::Home => self.select_first(),
             KeyCode::Char('G') | KeyCode::End => self.select_last(),
+            KeyCode::Char('F') => {
+                self.sender.send(Request::Database(DatabaseRequest::Get(Target::Project, None))).await;
+            },
             _ => {}
         }
     }
@@ -115,15 +171,6 @@ impl AppWidget {
         // We need to disambiguate this trait method as both `Widget` and `StatefulWidget` share the
         // same method name `render`.
         StatefulWidget::render(list, area, buf, &mut self.list.state);
-    }
-}
-
-impl Default for AppWidget {
-    fn default() -> Self {
-        AppWidget {
-            should_exit: false,
-            list: WidgetList::default()
-        }
     }
 }
 
