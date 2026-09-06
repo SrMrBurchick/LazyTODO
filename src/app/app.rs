@@ -62,9 +62,9 @@ impl App {
         let database_worker = DatabaseWorker::new(database);
 
         while let Some(request) = rx.recv().await {
-            match request.clone() {
-                Request::Database(_) => {
-                    match database_worker.handle_request(request.clone()) {
+            match request {
+                Request::Database(db_request) => {
+                    match database_worker.handle_request(db_request) {
                         Ok(response) => {
                             tx.send(response).await;
                         },

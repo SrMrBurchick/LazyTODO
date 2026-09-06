@@ -8,44 +8,38 @@ impl DatabaseWorker {
     pub fn new(database: Database) -> Self {
         DatabaseWorker { database: database }
     }
-
 }
 
 impl Worker for DatabaseWorker {
-    fn handle_request(&self, request: Request) -> Result<Response, String> {
+    type WorkerRequest = DatabaseRequest;
+
+    fn handle_request(&self, request: DatabaseRequest) -> Result<Response, String> {
         match request {
-            Request::Database(db_request) => {
-                match db_request {
-                    DatabaseRequest::Get(target, id) => {
-                        match target {
-                            Target::Project => {
-                                match self.database.list_projects() {
-                                    Ok(projects) => {
-                                        Ok(Response::Database(DatabaseResponse::Projects(projects)))
-                                    },
-                                    Err(e) => {
-                                        Err(e.to_string())
-                                    },
-                                }
-                            }
-                            _ => {
-                                Err("Unknown target".to_string())
+            DatabaseRequest::Get(target, id) => {
+                match target {
+                    Target::Project => {
+                        match self.database.list_projects() {
+                            Ok(projects) => {
+                                Ok(Response::Database(DatabaseResponse::Projects(projects)))
+                            },
+                            Err(e) => {
+                                Err(e.to_string())
                             },
                         }
-
                     }
-                    DatabaseRequest::Delete(target, id) => {
-                        Ok(Response::Nothing)
-                    }
-                    DatabaseRequest::UpdateState(target, id, new_state) => {
-                        Ok(Response::Nothing)
-                    }
-                    DatabaseRequest::Add(target) => {
-                        Ok(Response::Nothing)
-                    }
+                    _ => {
+                        Err("Unknown target".to_string())
+                    },
                 }
+
             }
-            _ => {
+            DatabaseRequest::Delete(target, id) => {
+                Ok(Response::Nothing)
+            }
+            DatabaseRequest::UpdateState(target, id, new_state) => {
+                Ok(Response::Nothing)
+            }
+            DatabaseRequest::Add(target) => {
                 Ok(Response::Nothing)
             }
         }
