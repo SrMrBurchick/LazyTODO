@@ -1,40 +1,52 @@
 use crate::{
-    app::{commands::create_command, projects::Project, tasks::Task}, core::{config::Config, database_manager::Database}
+    app::{commands::create_command, managers::project_manager::ProjectManager, ui::{app_widget::AppWidget, base::widget_list::WidgetListItem}}, core::{config::Config, database_manager::Database}
 };
 
 pub struct App {
     database: Database,
-    projects: Vec<Project>,
-    tasks: Vec<Task>,
-    config: Config
+    config: Config,
 }
 
 impl App {
     pub fn new() -> App {
         App {
             database: Database::default(),
-            projects: vec![],
-            tasks: vec![],
-            config: Config::new()
+            config: Config::new(),
         }
     }
 
     pub fn run(&mut self) {
-        println!("LazyTODO v.0.0.0");
         self.initialize();
 
         // Test CLI
         let args: Vec<String> = std::env::args().collect();
-        println!("{:?}", args);
-        let mut command = create_command(args[1].as_str());
-        command.construct(&args);
-        match command.execute(&self.database) {
-            Ok(_) => {
-                println!("Done");
-            },
-            Err(e) => {
-                eprintln!("Failed {e}");
-            },
+        if args.len() > 1 {
+            let title = env!("CARGO_PKG_NAME");
+            let version = env!("CARGO_PKG_VERSION");
+            println!("{title} {version}");
+            let mut command = create_command(args[1].as_str());
+            command.construct(&args);
+            match command.execute(&self.database) {
+                Ok(_) => {
+                    println!("Done");
+                },
+                Err(e) => {
+                    eprintln!("Failed {e}");
+                },
+            }
+        } else {
+            let mut app_widget = AppWidget::default();
+            match self.database.list_projects() {
+                Ok(projects) => {
+                    app_widget.list.items = projects[0].tasks.iter().cloned().map(|task| Box::new(task) as Box<dyn WidgetListItem>).collect();
+                },
+                Err(_) => {},
+            }
+
+            //
+            match ratatui::run(|terminal| app_widget.run(terminal)) {
+                _ => {},
+            }
         }
     }
 

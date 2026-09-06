@@ -5,7 +5,7 @@ use std::{
     env, fs
 };
 
-use crate::app::{projects::Project, tasks::{ETaskState, SubTask, Task}};
+use crate::app::base::{projects::Project, tasks::{ETaskState, SubTask, Task}};
 
 #[derive(Default)]
 pub struct Database {

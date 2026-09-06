@@ -1,4 +1,6 @@
-pub mod projects;
 pub mod app;
-pub mod tasks;
+pub mod base;
 pub mod commands;
+pub mod managers;
+pub mod events;
+pub mod ui;

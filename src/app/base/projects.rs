@@ -1,12 +1,20 @@
 use std::fmt;
-use crate::app::tasks::Task;
+use ratatui::widgets::ListItem;
 
-#[derive(Default)]
+use crate::app::{base::tasks::Task, ui::base::widget_list::WidgetListItem};
+
+#[derive(Default, Clone)]
 pub struct Project {
     pub id: i64,
     pub title: String,
     pub description: String,
     pub tasks: Vec<Task>
+}
+
+impl Project {
+    fn request() {
+        //
+    }
 }
 
 impl fmt::Display for Project {
@@ -21,5 +29,15 @@ impl fmt::Display for Project {
         }
 
         Ok(())
+    }
+}
+
+impl WidgetListItem for Project {
+    fn display(&self) -> String {
+        format!("{self}")
+    }
+
+    fn render(&self) -> ListItem<'_> {
+        ListItem::from(self)
     }
 }

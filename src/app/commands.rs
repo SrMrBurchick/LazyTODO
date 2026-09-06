@@ -1,4 +1,4 @@
-use crate::{app::tasks::ETaskState, core::database_manager::Database};
+use crate::{app::base::tasks::ETaskState, core::database_manager::Database};
 
 pub enum ECommands {
     Add,

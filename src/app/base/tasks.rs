@@ -1,11 +1,17 @@
 use std::fmt::{self, Display};
 
+use ratatui::widgets::ListItem;
+
+use crate::app::ui::base::widget_list::WidgetListItem;
+
+#[derive(Clone)]
 pub enum ETaskState {
     Todo = 0,
     InProgress = 1,
     Completed = 2
 }
 
+#[derive(Clone)]
 pub struct SubTask {
     pub id: i64,
     pub parent_task_id: i64,
@@ -14,6 +20,7 @@ pub struct SubTask {
     pub state: ETaskState
 }
 
+#[derive(Clone)]
 pub struct Task {
     pub id: i64,
     pub project_id: Option<i64>,
@@ -103,4 +110,12 @@ impl TryFrom<i64> for ETaskState {
     }
 }
 
+impl WidgetListItem for Task {
+    fn display(&self) -> String {
+        format!("{self}")
+    }
 
+    fn render(&self) -> ListItem<'_> {
+        ListItem::from(self)
+    }
+}
