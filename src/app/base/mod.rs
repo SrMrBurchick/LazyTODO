@@ -5,5 +5,6 @@ pub mod tasks;
 pub enum Target {
     Project,
     Task,
-    SubTask
+    SubTask,
+    All
 }

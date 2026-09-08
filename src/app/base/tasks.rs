@@ -1,8 +1,9 @@
 use std::fmt::{self, Display};
 
+use crossterm::event::KeyCode;
 use ratatui::widgets::ListItem;
 
-use crate::app::ui::base::widget_list::WidgetListItem;
+use crate::app::{base::Target, events::{DatabaseRequest, Request}, ui::base::widget_list::WidgetListItem};
 
 #[derive(Clone)]
 pub enum ETaskState {
@@ -110,12 +111,45 @@ impl TryFrom<i64> for ETaskState {
     }
 }
 
-impl WidgetListItem for Task {
+impl WidgetListItem for SubTask {
     fn display(&self) -> String {
-        format!("{self}")
+        format!("{}", self.title)
     }
 
     fn render(&self) -> ListItem<'_> {
         ListItem::from(self)
     }
+
+    fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
+        match key.code {
+            KeyCode::Enter => {
+                Ok(Request::Database(DatabaseRequest::Get(Target::SubTask, Some(self.id))))
+            }
+            _ => {
+                Ok(Request::Nothing)
+            }
+        }
+    }
+}
+
+impl WidgetListItem for Task {
+    fn display(&self) -> String {
+        format!("{}", self.title)
+    }
+
+    fn render(&self) -> ListItem<'_> {
+        ListItem::from(self)
+    }
+
+    fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
+        Ok(Request::Nothing)
+    }
+}
+
+pub fn tasks_to_widget_list(tasks: Vec<Task>) -> Vec<Box<dyn WidgetListItem>> {
+    tasks.into_iter().map(|task| Box::new(task) as Box<dyn WidgetListItem>).collect()
+}
+
+pub fn sub_tasks_to_widget_list(items: Vec<SubTask>) -> Vec<Box<dyn WidgetListItem>> {
+    items.into_iter().map(|item| Box::new(item) as Box<dyn WidgetListItem>).collect()
 }

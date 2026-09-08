@@ -1,1 +1,1 @@
-SELECT * FROM v_GetProjectsTasks AS pt WHERE pt.projectId = :projectId;
+SELECT * FROM v_GetProjectsTasks WHERE projectId = :projectId;

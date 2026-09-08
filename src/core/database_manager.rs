@@ -268,7 +268,7 @@ impl Database {
         Ok(new_project)
     }
 
-    fn get_sub_tasks_for_task(&self, parent_task_id: i64) -> Result<Vec<SubTask>, String> {
+    pub fn get_sub_tasks_for_task(&self, parent_task_id: i64) -> Result<Vec<SubTask>, String> {
         let mut sub_tasks: Vec<SubTask> = vec![];
         match &self.connection {
             Some(connection) => {
@@ -288,7 +288,7 @@ impl Database {
 
                     },
                     Err(e) => {
-                        eprintln!("Failed to get tasks list {e}");
+                        eprintln!("Failed to get sub tasks list {e}");
                         return Err(e.to_string());
                     },
                 }
@@ -301,26 +301,51 @@ impl Database {
         }
     }
 
-    pub fn list_tasks(&self) -> Result<Vec<Task>, String> {
+    pub fn get_tasks(&self, project_id: Option<i64>) -> Result<Vec<Task>, String> {
         match &self.connection {
             Some(connection) => {
                 let mut tasks: Vec<Task> = vec![];
-                match connection.prepare("SELECT * FROM v_GetNonProjectTasks;") {
-                    Ok(mut statement) => {
-                        while let Ok(State::Row) = statement.next() {
-                            match self.parse_task(&mut statement) {
-                                Ok(new_task) => {
-                                    tasks.push(new_task);
-                                },
-                                Err(e) => {
-                                    return Err(e);
-                                },
-                            }
+                match project_id {
+                    Some(id) => {
+                        match connection.prepare(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), env!("SQL_VIEW_GET_TASKS_BY_PROJECT")))) {
+                            Ok(mut statement) => {
+                                statement.bind((":projectId", id));
+                                while let Ok(State::Row) = statement.next() {
+                                    match self.parse_task(&mut statement) {
+                                        Ok(new_task) => {
+                                            tasks.push(new_task);
+                                        },
+                                        Err(e) => {
+                                            return Err(e);
+                                        },
+                                    }
+                                }
+                            },
+                            Err(e) => {
+                                eprintln!("Failed to get tasks list {e} for project {id}");
+                                return Err(e.to_string());
+                            },
                         }
-                    },
-                    Err(e) => {
-                        eprintln!("Failed to get tasks list {e}");
-                        return Err(e.to_string());
+                    }
+                    _ => {
+                        match connection.prepare("SELECT * FROM v_GetNonProjectTasks;") {
+                            Ok(mut statement) => {
+                                while let Ok(State::Row) = statement.next() {
+                                    match self.parse_task(&mut statement) {
+                                        Ok(new_task) => {
+                                            tasks.push(new_task);
+                                        },
+                                        Err(e) => {
+                                            return Err(e);
+                                        },
+                                    }
+                                }
+                            },
+                            Err(e) => {
+                                eprintln!("Failed to get tasks list {e}");
+                                return Err(e.to_string());
+                            },
+                        }
                     },
                 }
 
@@ -341,7 +366,7 @@ impl Database {
         }
     }
 
-    pub fn list_projects(&self) -> Result<Vec<Project>, String> {
+    pub fn get_projects(&self) -> Result<Vec<Project>, String> {
         match &self.connection {
             Some(connection) => {
                 let mut projects: Vec<Project> = vec![];

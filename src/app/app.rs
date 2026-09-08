@@ -42,7 +42,7 @@ impl App {
             let (request_tx, request_rx) = mpsc::channel::<Request>(32);
             let (response_tx, response_rx) = mpsc::channel::<Response>(32);
 
-            let app_widget = AppWidget::new(request_tx, response_rx);
+            let mut app_widget = AppWidget::new(request_tx, response_rx);
             let mut terminal = ratatui::init();
 
             tokio::spawn(async move {
@@ -50,6 +50,7 @@ impl App {
             });
 
 
+            app_widget.initialize();
             app_widget.run(&mut terminal).await;
 
             ratatui::restore();
@@ -73,6 +74,9 @@ impl App {
                 }
                 Request::Exit => {
                     return;
+                }
+                _ => {
+
                 }
             }
         }

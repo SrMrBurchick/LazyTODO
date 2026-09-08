@@ -1,7 +1,8 @@
 use std::fmt;
+use crossterm::event::KeyCode;
 use ratatui::widgets::ListItem;
 
-use crate::app::{base::tasks::Task, ui::base::widget_list::WidgetListItem};
+use crate::app::{base::{Target, tasks::Task}, events::{DatabaseRequest, Request}, ui::base::widget_list::WidgetListItem};
 
 #[derive(Default, Clone)]
 pub struct Project {
@@ -34,10 +35,25 @@ impl fmt::Display for Project {
 
 impl WidgetListItem for Project {
     fn display(&self) -> String {
-        format!("{self}")
+        format!("{}", self.title)
     }
 
     fn render(&self) -> ListItem<'_> {
         ListItem::from(self)
     }
+
+    fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
+        match key.code {
+            KeyCode::Enter => {
+                Ok(Request::Database(DatabaseRequest::Get(Target::Task, Some(self.id))))
+            }
+            _ => {
+                Ok(Request::Nothing)
+            }
+        }
+    }
+}
+
+pub fn projects_to_widget_list(items: Vec<Project>) -> Vec<Box<dyn WidgetListItem>> {
+    items.into_iter().map(|item| Box::new(item) as Box<dyn WidgetListItem>).collect()
 }

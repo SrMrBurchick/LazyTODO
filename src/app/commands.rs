@@ -196,7 +196,7 @@ impl CliCommand for ListCommand {
     fn execute(&self, database: &Database) -> Result<(), String> {
         match self.target.as_str() {
             TASK => {
-                match database.list_tasks() {
+                match database.get_tasks(None) {
                     Ok(tasks) => {
                         for task in tasks {
                             println!("{task}");
@@ -206,7 +206,7 @@ impl CliCommand for ListCommand {
                 }
             }
             PROJECT => {
-                match database.list_projects() {
+                match database.get_projects() {
                     Ok(projects) => {
                         for project in projects {
                             println!("{project}");

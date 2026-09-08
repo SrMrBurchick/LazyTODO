@@ -13,15 +13,19 @@ pub enum DatabaseRequest {
 #[derive(Clone)]
 pub enum Request {
     Database(DatabaseRequest),
-    Exit
+    Exit,
+    Nothing
 }
 
+#[derive(Clone)]
 pub enum DatabaseResponse {
     Projects(Vec<Project>),
     Tasks(Vec<Task>),
-    SubTasks(Vec<SubTask>)
+    SubTasks(Vec<SubTask>),
+    All(Vec<Project>, Vec<Task>)
 }
 
+#[derive(Clone)]
 pub enum Response {
     Database(DatabaseResponse),
     Nothing
