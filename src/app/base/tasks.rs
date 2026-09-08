@@ -121,14 +121,7 @@ impl WidgetListItem for SubTask {
     }
 
     fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
-        match key.code {
-            KeyCode::Enter => {
-                Ok(Request::Database(DatabaseRequest::Get(Target::SubTask, Some(self.id))))
-            }
-            _ => {
-                Ok(Request::Nothing)
-            }
-        }
+        Ok(Request::Nothing)
     }
 }
 
@@ -142,7 +135,14 @@ impl WidgetListItem for Task {
     }
 
     fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
-        Ok(Request::Nothing)
+        match key.code {
+            KeyCode::Enter => {
+                Ok(Request::Database(DatabaseRequest::Get(Target::SubTask, Some(self.id))))
+            }
+            _ => {
+                Ok(Request::Nothing)
+            }
+        }
     }
 }
 
