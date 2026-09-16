@@ -11,6 +11,7 @@ use ratatui::symbols;
 
 use crate::app::base::Target;
 use crate::app::events::{DatabaseRequest, Request};
+use crate::app::ui::sections::ESectionId;
 use crate::app::ui::views::base::view::View;
 use crate::app::{events::Response, ui::{base::widget_list::WidgetListItem, sections::base::section::Section, styles, views::list_view::ListView}};
 
@@ -105,7 +106,7 @@ pub struct SpacesSection {
 impl SpacesSection {
     pub fn new() -> Self {
         SpacesSection {
-            view: ListView::new("Spaces"),
+            view: ListView::new("SPACES"),
             focused: true
         }
     }
@@ -122,19 +123,11 @@ impl Section for SpacesSection {
     fn handle_response(&mut self, response: Response) {
     }
 
-    fn is_focused(&self) -> bool {
-        self.focused
-    }
-
     fn reset(&mut self) {
     }
 
-    fn set_focus(&mut self, focus: bool) {
-        self.focused = focus;
-    }
-
-    fn toggle_focus(&mut self) {
-        self.focused = !self.focused;
+    fn get_id(&self) -> Option<ESectionId> {
+        Some(ESectionId::Spaces)
     }
 
     fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<Request, String> {
@@ -144,9 +137,5 @@ impl Section for SpacesSection {
     fn render(&mut self, area: Rect, buf: &mut Buffer) {
         // content
         self.view.render(area, buf);
-    }
-
-    fn get_name(&self) -> String {
-        "Spaces".to_uppercase().to_string()
     }
 }

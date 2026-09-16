@@ -3,3 +3,4 @@ pub mod styles;
 pub mod base;
 pub mod views;
 pub mod sections;
+pub mod components;

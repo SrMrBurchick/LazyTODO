@@ -78,9 +78,15 @@ impl ListView {
         self.list.state.selected()
     }
 
+    pub fn select(&mut self, id: Option<usize>) {
+        match self.list.state.select(id) {
+            _ => {},
+        };
+    }
+
     fn handle_navigation(&mut self, key: crossterm::event::KeyEvent) {
         match key.code {
-            KeyCode::Char('h') | KeyCode::Left => self.select_none(),
+            KeyCode::Char('h') => self.select_none(),
             KeyCode::Char('j') | KeyCode::Down => self.select_next(),
             KeyCode::Char('k') | KeyCode::Up => self.select_previous(),
             KeyCode::Char('g') | KeyCode::Home => self.select_first(),
