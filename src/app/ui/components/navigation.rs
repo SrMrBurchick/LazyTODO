@@ -1,6 +1,6 @@
 use crossterm::event::{KeyCode, KeyEvent};
 
-use crate::app::{events::{DatabaseResponse, Request, Response}, ui::{components::base::component::Component, sections::ESectionId}};
+use crate::app::{events::{DatabaseResponse, HistoryRequest, Request, Response}, ui::{components::base::component::Component, sections::ESectionId}};
 
 pub struct NavigationComponent {
     current_active_section: Option<ESectionId>
@@ -69,6 +69,9 @@ impl Component for NavigationComponent {
             },
             KeyCode::Left => {
                 self.go_back();
+            },
+            KeyCode::Esc => {
+                return Ok(Request::History(HistoryRequest::GetPrevious));
             }
             _ => {
             }

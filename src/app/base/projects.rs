@@ -2,9 +2,11 @@ use std::fmt;
 use crossterm::event::KeyCode;
 use ratatui::widgets::ListItem;
 
-use crate::app::{base::{Target, tasks::Task}, events::{DatabaseRequest, Request}, ui::base::widget_list::WidgetListItem};
+use crate::app::{
+    base::{Target, tasks::Task}, events::{DatabaseRequest, DatabaseResponse, Request, event_listener::EventsListener}, ui::base::widget_list::WidgetListItem
+};
 
-#[derive(Default, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct Project {
     pub id: i64,
     pub title: String,
@@ -54,6 +56,13 @@ impl WidgetListItem for Project {
     }
 }
 
-pub fn projects_to_widget_list(items: Vec<Project>) -> Vec<Box<dyn WidgetListItem>> {
-    items.into_iter().map(|item| Box::new(item) as Box<dyn WidgetListItem>).collect()
+impl EventsListener for Project {
+    type WorkerResponse = DatabaseResponse;
+    fn handle_response(&mut self, response: &Self::WorkerResponse) -> Result<Request, String> {
+        Ok(Request::Nothing)
+    }
+}
+
+pub fn projects_to_widget_list(items: &Vec<Project>) -> Vec<Box<dyn WidgetListItem>> {
+    items.into_iter().map(|item| Box::new(item.clone()) as Box<dyn WidgetListItem>).collect()
 }

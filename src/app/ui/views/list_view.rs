@@ -104,10 +104,42 @@ impl View for ListView {
         self.list.handle_key(key)
     }
 
+    fn render_data(&mut self, area: Rect, buf: &mut Buffer, data: &Vec<Box<dyn WidgetListItem>>)
+    {
+        let block = Block::new()
+            .title(Line::raw(self.title.as_str()).centered())
+            .borders(Borders::ALL)
+            .border_set(symbols::border::EMPTY)
+            .border_style(styles::TODO_HEADER_STYLE)
+            .bg(styles::NORMAL_ROW_BG);
+
+        // Iterate through all elements in the `items` and stylize them.
+        let items: Vec<ListItem> = data 
+            .iter()
+            .enumerate()
+            .map(|(i, item)| {
+                item.render().bg(alternate_colors(i))
+            })
+            .collect();
+
+        // // Create a List from all list items and highlight the currently selected one
+        let list = List::new(items)
+            .block(block)
+            .highlight_style(styles::SELECTED_STYLE)
+            .highlight_symbol(">")
+            .highlight_spacing(HighlightSpacing::Always);
+
+
+        // We need to disambiguate this trait method as both `Widget` and `StatefulWidget` share the
+        // same method name `render`.
+        StatefulWidget::render(list, area, buf, &mut self.list.state);
+
+    }
+
     fn render(&mut self, area: Rect, buf: &mut Buffer) {
         let block = Block::new()
             .title(Line::raw(self.title.as_str()).centered())
-            .borders(Borders::TOP)
+            .borders(Borders::ALL)
             .border_set(symbols::border::EMPTY)
             .border_style(styles::TODO_HEADER_STYLE)
             .bg(styles::NORMAL_ROW_BG);

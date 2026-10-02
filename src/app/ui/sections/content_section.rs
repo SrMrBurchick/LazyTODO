@@ -10,8 +10,10 @@ use ratatui::widgets::{
 use ratatui::symbols;
 use tracing::info;
 
-use crate::app::base::projects::projects_to_widget_list;
-use crate::app::base::tasks::{sub_tasks_to_widget_list, tasks_to_widget_list};
+use crate::app::base::Target;
+use crate::app::base::projects::{Project, projects_to_widget_list};
+use crate::app::base::tasks::{SubTask, Task, sub_tasks_to_widget_list, tasks_to_widget_list};
+use crate::app::events::event_listener::EventsListener;
 use crate::app::events::{DatabaseResponse, Request};
 use crate::app::ui::sections::{ESectionId, ESubsectionId};
 use crate::app::ui::views::base::view::View;
@@ -20,9 +22,10 @@ use crate::app::{events::Response, ui::{base::widget_list::WidgetListItem, secti
 pub struct ContentSection {
     view: ListView,
     sub_section: Option<ESubsectionId>,
-    prev_response: Option<DatabaseResponse>,
-    prev_position: Option<usize>,
-    history: Vec<(Option<usize>, Option<DatabaseResponse>)>
+    active_target: Option<Target>,
+    projects: Vec<Project>,
+    tasks: Vec<Task>,
+    subtasks: Vec<SubTask>
 }
 
 impl ContentSection {
@@ -30,42 +33,11 @@ impl ContentSection {
         ContentSection {
             view: ListView::new("Content"),
             sub_section: None,
-            prev_response: None,
-            prev_position: None,
-            history: vec![]
+            active_target: None,
+            projects: vec![],
+            tasks: vec![],
+            subtasks: vec![]
         }
-    }
-
-    fn save_history(&mut self) {
-        match &self.prev_response {
-            Some(response) => {
-                match response {
-                    DatabaseResponse::SubTasks(_) => {
-                        // Skip
-                    }
-                    _ => {
-                        info!("In View Selected: {:?}", self.view.selected());
-                        self.history.push((self.view.selected(), self.prev_response.clone()));
-                    },
-                }
-            },
-            None => {},
-        }
-    }
-
-    fn clear_history(&mut self) {
-        self.history.clear();
-    }
-
-    fn pop_from_history(&mut self) -> Option<DatabaseResponse> {
-        match self.history.pop() {
-            Some(response) => {
-                self.prev_position = response.0;
-                return response.1;
-            },
-            None => {},
-        }
-        None
     }
 }
 
@@ -81,48 +53,60 @@ impl Section for ContentSection {
         Some(ESectionId::Content(self.sub_section))
     }
 
-    fn handle_response(&mut self, response: Response) {
+    fn handle_response(&mut self, response: &Response) {
         match response {
             Response::Database(database_response) => {
-                self.save_history();
-                self.prev_response = Some(database_response.clone());
                 match database_response {
                     DatabaseResponse::Tasks(tasks) => {
-                        self.view.set_items(tasks_to_widget_list(tasks));
+                        self.active_target = Some(Target::Task);
+                        self.tasks = tasks.clone();
                     },
                     DatabaseResponse::SubTasks(tasks) => {
-                        self.view.set_items(sub_tasks_to_widget_list(tasks));
+                        self.active_target = Some(Target::SubTask);
+                        self.subtasks = tasks.clone();
                     },
                     DatabaseResponse::Projects(projects) => {
-                        self.clear_history();
-                        self.view.set_items(projects_to_widget_list(projects));
-                    }
+                        self.active_target = Some(Target::Project);
+                        self.projects = projects.clone();
+                    },
                     DatabaseResponse::All(projects, tasks) => {
-                        self.clear_history();
-                        self.view.set_items(projects_to_widget_list(projects));
-                        self.view.append_items(tasks_to_widget_list(tasks));
-                    }
-                    _ => {},
-                }
+                        self.active_target = Some(Target::All);
+                        self.projects = projects.clone();
+                        self.tasks = tasks.clone();
+                    },
+                    DatabaseResponse::Updated(target, _, _) => {
+                        match &self.active_target {
+                            Some(_) => {
+                                for project in self.projects.iter_mut() {
+                                    project.handle_response(database_response);
+                                }
+                                for task in self.tasks.iter_mut() {
+                                    task.handle_response(database_response);
+                                }
+                                for subtask in self.subtasks.iter_mut() {
+                                    subtask.handle_response(database_response);
+                                }
+                            },
+                            None => {
+                            },
+                        }
 
-                info!("Restore Selected: {:?}", self.prev_position);
-                self.view.select(self.prev_position);
+                    },
+                    _ => {
+                        self.active_target = None;
+                        self.projects.clear();
+                        self.tasks.clear();
+                        self.subtasks.clear();
+                    },
+                }
             }
-            _ => {},
+            _ => {
+            },
         }
     }
 
     fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<Request, String> {
         match key.code {
-            KeyCode::Esc => {
-                match self.pop_from_history() {
-                    Some(database_response) => {
-                        self.handle_response(Response::Database(database_response));
-                    },
-                    None => {},
-                }
-                Ok(Request::Nothing)
-            },
             _ => {
                 self.view.handle_key(key)
             },
@@ -131,6 +115,32 @@ impl Section for ContentSection {
 
     fn render(&mut self, area: Rect, buf: &mut Buffer) {
         // content
+        match &self.active_target {
+            Some(target) => {
+                let mut view_data: Vec<Box<dyn WidgetListItem>> = vec![];
+                match target {
+                    Target::Task => {
+                        view_data = tasks_to_widget_list(&self.tasks);
+                    },
+                    Target::SubTask => {
+                        view_data = sub_tasks_to_widget_list(&self.subtasks);
+                    },
+                    Target::Project => {
+                        view_data = projects_to_widget_list(&self.projects);
+                    },
+                    Target::All => {
+                        view_data = projects_to_widget_list(&self.projects);
+                        view_data.extend(tasks_to_widget_list(&self.tasks));
+                    },
+                    _ => {},
+                }
+                self.view.set_items(view_data);
+            },
+            None => {
+                self.view.set_items(vec![]);
+            },
+        }
+
         self.view.render(area, buf);
     }
 

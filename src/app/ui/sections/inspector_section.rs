@@ -41,7 +41,7 @@ impl Section for InspectorSection {
     }
 
 
-    fn handle_response(&mut self, response: Response) {
+    fn handle_response(&mut self, response: &Response) {
         match response {
             Response::Database(database_response) => {
                 match database_response {

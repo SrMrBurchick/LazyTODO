@@ -86,7 +86,7 @@ impl AppWidget {
 
     fn handle_response(&mut self, response: Response) {
         for section in self.sections.iter_mut() {
-            section.handle_response(response.clone());
+            section.handle_response(&response);
         }
     }
 
@@ -98,7 +98,12 @@ impl AppWidget {
             },
             _ => {
                 match self.navigation_component.handle_key(key) {
-                    Ok(_) => {},
+                    Ok(request) => {
+                        if (request != Request::Nothing) {
+                            self.sender.send(request).await;
+                            return;
+                        }
+                    },
                     Err(_) => {},
                 }
 
@@ -162,15 +167,6 @@ impl AppWidget {
 
 impl Widget for &mut AppWidget {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
-        let main_layout = Layout::vertical([
-            Constraint::Length(2),
-            Constraint::Fill(1),
-            Constraint::Length(1),
-        ]);
-        let [header_area, content_area, footer_area] = area.layout(&main_layout);
-
-        // AppWidget::render_header(header_area, buf);
         self.render_content(area, buf);
-        // AppWidget::render_footer(footer_area, buf);
     }
 }

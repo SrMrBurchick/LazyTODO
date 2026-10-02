@@ -5,5 +5,5 @@ use crate::app::events::{Request, Response};
 pub trait Worker {
     type WorkerRequest;
 
-    fn handle_request(&self, request: Self::WorkerRequest) -> Result<Response, String>;
+    fn handle_request(&mut self, request: Self::WorkerRequest) -> Result<Response, String>;
 }

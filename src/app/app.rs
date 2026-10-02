@@ -1,7 +1,7 @@
 use std::clone;
 
 use crate::{
-    app::{base::Target, commands::create_command, events::{DatabaseRequest, Request, Response}, managers::project_manager::ProjectManager, ui::{app_widget::AppWidget, base::widget_list::WidgetListItem}, workers::{base::worker::Worker, database_worker::DatabaseWorker}}, core::{config::Config, database_manager::Database}
+    app::{commands::create_command, events::{Request, Response}, ui::app_widget::AppWidget, workers::{base::worker::Worker, database_worker::DatabaseWorker, history_worker::HistoryWorker}}, core::{config::Config, database_manager::Database}
 };
 
 use tokio::sync::mpsc;
@@ -49,7 +49,6 @@ impl App {
                 App::setup_workers(response_tx, request_rx).await;
             });
 
-
             app_widget.initialize();
             app_widget.run(&mut terminal).await;
 
@@ -60,16 +59,27 @@ impl App {
     async fn setup_workers(tx: mpsc::Sender<Response>, mut rx: mpsc::Receiver<Request>) {
         let mut database = Database::default();
         database.initialize();
-        let database_worker = DatabaseWorker::new(database);
+
+        let mut database_worker = DatabaseWorker::new(database);
+        let mut history_worker = HistoryWorker::new();
 
         while let Some(request) = rx.recv().await {
             match request {
                 Request::Database(db_request) => {
                     match database_worker.handle_request(db_request) {
                         Ok(response) => {
+                            history_worker.save_response(response.clone());
                             tx.send(response).await;
                         },
                         Err(_) => {},
+                    }
+                }
+                Request::History(history_request) => {
+                    match history_worker.handle_request(history_request) {
+                        Ok(response) => {
+                            tx.send(response).await;
+                        },
+                        Err(_) => {}
                     }
                 }
                 Request::Exit => {

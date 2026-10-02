@@ -13,7 +13,7 @@ impl DatabaseWorker {
 impl Worker for DatabaseWorker {
     type WorkerRequest = DatabaseRequest;
 
-    fn handle_request(&self, request: DatabaseRequest) -> Result<Response, String> {
+    fn handle_request(&mut self, request: DatabaseRequest) -> Result<Response, String> {
         match request {
             DatabaseRequest::Get(target, id) => {
                 match target {
@@ -79,7 +79,18 @@ impl Worker for DatabaseWorker {
             DatabaseRequest::Delete(target, id) => {
                 Ok(Response::Nothing)
             }
-            DatabaseRequest::UpdateState(target, id, new_state) => {
+            DatabaseRequest::UpdateState(target, new_state, id) => {
+                match target {
+                    Target::Task => {
+                        self.database.update_task_state(id, new_state.clone());
+                        return Ok(Response::Database(DatabaseResponse::Updated(target, new_state, Some(id))));
+                    }
+                    Target::SubTask => {
+                        self.database.update_sub_task_state(id, new_state.clone());
+                        return Ok(Response::Database(DatabaseResponse::Updated(target, new_state, Some(id))));
+                    }
+                    _ => {},
+                }
                 Ok(Response::Nothing)
             }
             DatabaseRequest::Add(target) => {

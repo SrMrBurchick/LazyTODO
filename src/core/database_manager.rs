@@ -4,6 +4,7 @@ use sqlite::{
 use std::{
     env, fs
 };
+use tracing::{info, error, warn};
 
 use crate::app::base::{projects::Project, tasks::{ETaskState, SubTask, Task}};
 
@@ -21,7 +22,7 @@ impl Database {
                 self.initialize_views();
             },
             Err(error) => {
-                println!("{:?}", error);
+                error!("{:?}", error);
             },
         };
     }
@@ -31,10 +32,10 @@ impl Database {
             Some(connection) => {
                 match connection.execute("PRAGMA foreign_keys = ON;") {
                     Ok(result) => {
-                        println!("Foreign keys enabled successfully! {:?}", result);
+                        info!("Foreign keys enabled successfully! {:?}", result);
                     },
                     Err(error) => {
-                        println!("Failed to enable foreign_keys: {:?}", error);
+                        error!("Failed to enable foreign_keys: {:?}", error);
                     },
                 }
             },
@@ -64,10 +65,10 @@ impl Database {
             Some(connection) => {
                 match connection.execute(include_str!(concat!(env!("CARGO_MANIFEST_DIR"),env!("SQL_TABLES")))) {
                     Ok(result) => {
-                        println!("Database created successfully! {:?}", result);
+                        info!("Database created successfully! {:?}", result);
                     },
                     Err(error) => {
-                        println!("Failed to create tables: {:?}", error);
+                        error!("Failed to create tables: {:?}", error);
                     },
                 }
             },
@@ -81,10 +82,10 @@ impl Database {
             Some(connection) => {
                 match connection.execute(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), env!("SQL_VIEWS")))) {
                     Ok(result) => {
-                        println!("Views created successfully! {:?}", result);
+                        info!("Views created successfully! {:?}", result);
                     },
                     Err(error) => {
-                        println!("Failed to create views: {:?}", error);
+                        error!("Failed to create views: {:?}", error);
                     },
                 }
             },
@@ -110,20 +111,20 @@ impl Database {
 
                         match statement.next() {
                             Ok(res) => {
-                                println!("Executed successfully! {:?}", res);
+                                info!("Executed successfully! {:?}", res);
                             },
                             Err(err) => {
-                                println!("Failed to create new project! {:?}", err);
+                                error!("Failed to create new project! {:?}", err);
                             },
                         }
                     },
                     Err(e) => {
-                        eprintln!("Failed to create task {e}")
+                        error!("Failed to create task {e}")
                     },
                 };
             },
             None => {
-                eprintln!("Invalid connection");
+                error!("Invalid connection");
             },
         }
     }
@@ -140,20 +141,20 @@ impl Database {
 
                         match statement.next() {
                             Ok(res) => {
-                                println!("Executed successfully! {:?}", res);
+                                info!("Executed successfully! {:?}", res);
                             },
                             Err(err) => {
-                                println!("Failed to create new subtask! {:?}", err);
+                                error!("Failed to create new subtask! {:?}", err);
                             },
                         }
                     },
                     Err(e) => {
-                        eprintln!("Failed to create task {e}")
+                        error!("Failed to create task {e}")
                     },
                 };
             },
             None => {
-                eprintln!("Invalid connection");
+                error!("Invalid connection");
             },
         }
     }
@@ -167,10 +168,10 @@ impl Database {
                         statement.bind((":description", description)).unwrap();
                         match statement.next() {
                             Ok(res) => {
-                                println!("Executed successfully! {:?}", res);
+                                info!("Executed successfully! {:?}", res);
                             },
                             Err(err) => {
-                                println!("Failed to create new project! {:?}", err);
+                                warn!("Failed to create new project! {:?}", err);
                             },
                         }
                     },
@@ -178,7 +179,7 @@ impl Database {
                 };
             },
             None => {
-                eprintln!("Invalid connection");
+                error!("Invalid connection");
             },
         }
     }
@@ -190,7 +191,7 @@ impl Database {
                 new_task.id = value;
             },
             Err(e) => {
-                eprintln!("Failed to read task ID {e}");
+                error!("Failed to read task ID {e}");
                 return Err(e.to_string());
             },
         }
@@ -210,7 +211,7 @@ impl Database {
                 new_task.state = state;
             },
             Err(e) => {
-                eprintln!("Invalid task state! {e}");
+                error!("Invalid task state! {e}");
                 return Err(e);
             },
         }
@@ -226,7 +227,7 @@ impl Database {
                 new_sub_task.id = value;
             },
             Err(e) => {
-                eprintln!("Failed to read task ID {e}");
+                error!("Failed to read task ID {e}");
                 return Err(e.to_string());
             },
         }
@@ -241,7 +242,7 @@ impl Database {
                 new_sub_task.state = state;
             },
             Err(e) => {
-                eprintln!("Invalid task state! {e}");
+                error!("Invalid task state! {e}");
                 return Err(e);
             },
         }
@@ -256,7 +257,7 @@ impl Database {
                 new_project.id = value;
             },
             Err(e) => {
-                eprintln!("Failed to read project ID {e}");
+                error!("Failed to read project ID {e}");
                 return Err(e.to_string());
             },
         }
@@ -288,7 +289,7 @@ impl Database {
 
                     },
                     Err(e) => {
-                        eprintln!("Failed to get sub tasks list {e}");
+                        error!("Failed to get sub tasks list {e}");
                         return Err(e.to_string());
                     },
                 }
@@ -322,7 +323,7 @@ impl Database {
                                 }
                             },
                             Err(e) => {
-                                eprintln!("Failed to get tasks list {e} for project {id}");
+                                error!("Failed to get tasks list {e} for project {id}");
                                 return Err(e.to_string());
                             },
                         }
@@ -342,7 +343,7 @@ impl Database {
                                 }
                             },
                             Err(e) => {
-                                eprintln!("Failed to get tasks list {e}");
+                                error!("Failed to get tasks list {e}");
                                 return Err(e.to_string());
                             },
                         }
@@ -384,7 +385,7 @@ impl Database {
                         }
                     },
                     Err(e) => {
-                        eprintln!("Failed to get projects list {e}");
+                        error!("Failed to get projects list {e}");
                         return Err(e.to_string());
                     },
                 }
@@ -408,7 +409,7 @@ impl Database {
                         }
                     },
                     Err(e) => {
-                        eprintln!("Failed to get tasks list {e}");
+                        error!("Failed to get tasks list {e}");
                         return Err(e.to_string());
                     },
                 }
@@ -440,20 +441,20 @@ impl Database {
                         statement.bind((":targetId", id)).unwrap();
                         match statement.next() {
                             Ok(_) => {
-                                println!("Subtask deleted successfully");
+                                error!("Subtask deleted successfully");
                             },
                             Err(e) => {
-                                eprintln!("Failed to delete subtask {e}");
+                                warn!("Failed to delete subtask {e}");
                             },
                         }
                     },
                     Err(e) => {
-                        eprintln!("Failed to create statement {e}");
+                        error!("Failed to create statement {e}");
                     },
                 }
             },
             None => {
-                eprintln!("Invalid connection");
+                error!("Invalid connection");
             },
         }
     }
@@ -467,15 +468,15 @@ impl Database {
                         statement.bind((":targetId", id)).unwrap();
                         match statement.next() {
                             Ok(_) => {
-                                println!("Subtasks for for parent {id} deleted successfully");
+                                info!("Subtasks for for parent {id} deleted successfully");
                             },
                             Err(e) => {
-                                eprintln!("Failed to delete subtasks for {id} {e}");
+                                warn!("Failed to delete subtasks for {id} {e}");
                             },
                         }
                     },
                     Err(e) => {
-                        eprintln!("Failed to create statement {e}");
+                        error!("Failed to create statement {e}");
                     },
                 }
 
@@ -484,21 +485,21 @@ impl Database {
                         statement.bind((":targetId", id)).unwrap();
                         match statement.next() {
                             Ok(_) => {
-                                println!("Task deleted successfully");
+                                info!("Task deleted successfully");
                             },
                             Err(e) => {
-                                eprintln!("Failed to delete task {e}");
+                                error!("Failed to delete task {e}");
                             },
                         }
                     },
                     Err(e) => {
-                        eprintln!("Failed to create statement {e}");
+                        error!("Failed to create statement {e}");
                     },
                 }
 
             },
             None => {
-                eprintln!("Invalid connection");
+                error!("Invalid connection");
             },
         }
     }
@@ -511,15 +512,15 @@ impl Database {
                         statement.bind((":targetId", id)).unwrap();
                         match statement.next() {
                             Ok(_) => {
-                                println!("SubTasks for project {id} was deleted successfully");
+                                info!("SubTasks for project {id} was deleted successfully");
                             },
                             Err(e) => {
-                                eprintln!("Failed to delete subtasks for {id} {e}");
+                                error!("Failed to delete subtasks for {id} {e}");
                             },
                         }
                     },
                     Err(e) => {
-                        eprintln!("Failed to create statement {e}");
+                        error!("Failed to create statement {e}");
                     },
                 }
 
@@ -528,15 +529,15 @@ impl Database {
                         statement.bind((":targetId", id)).unwrap();
                         match statement.next() {
                             Ok(_) => {
-                                println!("Tasks for project {id} was deleted successfully");
+                                info!("Tasks for project {id} was deleted successfully");
                             },
                             Err(e) => {
-                                eprintln!("Failed to delete tasks for {id} {e}");
+                                error!("Failed to delete tasks for {id} {e}");
                             },
                         }
                     },
                     Err(e) => {
-                        eprintln!("Failed to create statement {e}");
+                        error!("Failed to create statement {e}");
                     },
                 }
 
@@ -545,20 +546,20 @@ impl Database {
                         statement.bind((":targetId", id)).unwrap();
                         match statement.next() {
                             Ok(_) => {
-                                println!("Project {id} was deleted successfully");
+                                info!("Project {id} was deleted successfully");
                             },
                             Err(e) => {
-                                eprintln!("Failed to delete project {id} {e}");
+                                error!("Failed to delete project {id} {e}");
                             },
                         }
                     },
                     Err(e) => {
-                        eprintln!("Failed to create statement {e}");
+                        error!("Failed to create statement {e}");
                     },
                 }
             },
             None => {
-                eprintln!("Invalid connection");
+                error!("Invalid connection");
             },
         }
     }
@@ -573,20 +574,20 @@ impl Database {
                         statement.bind((":newDescription", description)).unwrap();
                         match statement.next() {
                             Ok(_) => {
-                                println!("Tasks {id} was updated successfully");
+                                info!("Tasks {id} was updated successfully");
                             },
                             Err(e) => {
-                                eprintln!("Failed to update task for {id} {e}");
+                                error!("Failed to update task for {id} {e}");
                             },
                         }
                     },
                     Err(e) => {
-                        eprintln!("Failed to create statement {e}");
+                        error!("Failed to create statement {e}");
                     },
                 }
             },
             None => {
-                eprintln!("Invalid connection");
+                error!("Invalid connection");
             },
         }
     }
@@ -601,20 +602,20 @@ impl Database {
                         statement.bind((":newDescription", description)).unwrap();
                         match statement.next() {
                             Ok(_) => {
-                                println!("Tasks {id} was updated successfully");
+                                info!("Tasks {id} was updated successfully");
                             },
                             Err(e) => {
-                                eprintln!("Failed to update task for {id} {e}");
+                                error!("Failed to update task for {id} {e}");
                             },
                         }
                     },
                     Err(e) => {
-                        eprintln!("Failed to create statement {e}");
+                        error!("Failed to create statement {e}");
                     },
                 }
             },
             None => {
-                eprintln!("Invalid connection");
+                error!("Invalid connection");
             },
         }
     }
@@ -628,20 +629,20 @@ impl Database {
                         statement.bind((":newState", state as i64)).unwrap();
                         match statement.next() {
                             Ok(_) => {
-                                println!("Tasks {id} state was updated successfully");
+                                info!("Tasks {id} state was updated successfully");
                             },
                             Err(e) => {
-                                eprintln!("Failed to update state for {id} {e}");
+                                error!("Failed to update state for {id} {e}");
                             },
                         }
                     },
                     Err(e) => {
-                        eprintln!("Failed to create statement {e}");
+                        error!("Failed to create statement {e}");
                     },
                 }
             },
             None => {
-                eprintln!("Invalid connection");
+                error!("Invalid connection");
             },
         }
     }
@@ -655,20 +656,20 @@ impl Database {
                         statement.bind((":newState", state as i64)).unwrap();
                         match statement.next() {
                             Ok(_) => {
-                                println!("Tasks {id} state was updated successfully");
+                                info!("Tasks {id} state was updated successfully");
                             },
                             Err(e) => {
-                                eprintln!("Failed to update state for {id} {e}");
+                                error!("Failed to update state for {id} {e}");
                             },
                         }
                     },
                     Err(e) => {
-                        eprintln!("Failed to create statement {e}");
+                        error!("Failed to create statement {e}");
                     },
                 }
             },
             None => {
-                eprintln!("Invalid connection");
+                error!("Invalid connection");
             },
         }
     }

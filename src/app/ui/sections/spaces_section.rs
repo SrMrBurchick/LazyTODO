@@ -120,7 +120,7 @@ impl Section for SpacesSection {
         self.view.add_item(Box::new(Space::new("SCHEDULED", "⚑", ESpaces::Scheduled)));
     }
 
-    fn handle_response(&mut self, response: Response) {
+    fn handle_response(&mut self, response: &Response) {
     }
 
     fn reset(&mut self) {

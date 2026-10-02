@@ -1,8 +1,10 @@
+use std::fmt;
+
 use crate::app::base::{Target, projects::Project, tasks::{ETaskState, SubTask, Task}};
 
-pub mod input;
+pub mod event_listener;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum DatabaseRequest {
     Get(Target, Option<i64>),
     Add(Target),
@@ -10,23 +12,38 @@ pub enum DatabaseRequest {
     Delete(Target, i64)
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum HistoryRequest {
+    GetPrevious,
+    GetNext
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Request {
     Database(DatabaseRequest),
+    History(HistoryRequest),
     Exit,
     Nothing
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum DatabaseResponse {
     Projects(Vec<Project>),
     Tasks(Vec<Task>),
     SubTasks(Vec<SubTask>),
-    All(Vec<Project>, Vec<Task>)
+    All(Vec<Project>, Vec<Task>),
+    Updated(Target, ETaskState, Option<i64>)
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
+enum HistoryResponse {
+    Previous(Option<DatabaseResponse>),
+    Next(Option<DatabaseResponse>)
+}
+
+#[derive(Clone, Debug)]
 pub enum Response {
     Database(DatabaseResponse),
+    History(HistoryResponse),
     Nothing
 }
