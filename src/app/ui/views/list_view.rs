@@ -12,7 +12,7 @@ use ratatui::{DefaultTerminal, symbols};
 
 
 
-use crate::app::events::Response;
+use crate::app::events::{Request, Response};
 use crate::app::ui::base::widget_list::*;
 use crate::app::ui::styles;
 use crate::app::ui::views::base::view::{self, View};
@@ -84,7 +84,9 @@ impl ListView {
         };
     }
 
-    fn handle_navigation(&mut self, key: crossterm::event::KeyEvent) {
+    fn handle_navigation(&mut self, key: crossterm::event::KeyEvent)  -> Result<crate::app::events::Request, String> {
+        let prev_selected = self.list.state.selected();
+
         match key.code {
             KeyCode::Char('h') => self.select_none(),
             KeyCode::Char('j') | KeyCode::Down => self.select_next(),
@@ -94,13 +96,41 @@ impl ListView {
             _ => {
             }
         }
+
+        match prev_selected {
+            Some(selected) => {
+                match self.list.state.selected() {
+                    Some(current_selected) => {
+                        if selected != current_selected {
+                            match self.list.items.get(current_selected) {
+                                Some(item) => {
+                                    return item.mark_selected();
+                                },
+                                None => {},
+                            }
+                        }
+                    },
+                    None => {},
+                }
+            },
+            None => {},
+        }
+
+        Ok(Request::Nothing)
     }
 
 }
 
 impl View for ListView {
     fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
-        self.handle_navigation(key);
+        match self.handle_navigation(key) {
+            Ok(request) => {
+                if request != Request::Nothing {
+                    return Ok(request);
+                }
+            },
+            Err(_) => {},
+        }
         self.list.handle_key(key)
     }
 

@@ -3,7 +3,7 @@ use crossterm::event::KeyCode;
 use ratatui::widgets::ListItem;
 
 use crate::app::{
-    base::{Target, tasks::Task}, events::{DatabaseRequest, DatabaseResponse, Request, event_listener::EventsListener}, ui::base::widget_list::WidgetListItem
+    base::{Target, tasks::Task}, events::{DatabaseRequest, DatabaseResponse, Request, SelectionRequest, event_listener::EventsListener}, ui::base::widget_list::WidgetListItem
 };
 
 #[derive(Default, Debug, Clone)]
@@ -53,6 +53,10 @@ impl WidgetListItem for Project {
                 Ok(Request::Nothing)
             }
         }
+    }
+
+    fn mark_selected(&self) -> Result<Request, String> {
+        Ok(Request::Selection(SelectionRequest::Selected(Target::Project, None, Some(self.id))))
     }
 }
 

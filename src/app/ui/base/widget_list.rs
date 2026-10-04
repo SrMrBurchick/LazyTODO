@@ -6,6 +6,7 @@ pub trait WidgetListItem {
     fn display(&self) -> String;
     fn render(&self) -> ListItem<'_>;
     fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<Request, String>;
+    fn mark_selected(&self) -> Result<Request, String>;
 }
 
 pub struct WidgetList {

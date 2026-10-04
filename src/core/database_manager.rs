@@ -6,7 +6,7 @@ use std::{
 };
 use tracing::{info, error, warn};
 
-use crate::app::base::{projects::Project, tasks::{ETaskState, SubTask, Task}};
+use crate::app::base::{TargetInfo, projects::Project, tasks::{ETaskState, SubTask, Task}};
 
 #[derive(Default)]
 pub struct Database {
@@ -268,6 +268,201 @@ impl Database {
 
         Ok(new_project)
     }
+
+    fn parse_projects_info(&self, statement: &mut Statement) -> Option<TargetInfo> {
+        let total: i64;
+        let completed: i64;
+        match statement.read("total") {
+            Ok(value) => {
+                total = value;
+            },
+            Err(e) => {
+                error!("Failed to read project ID {e}");
+                return None;
+            },
+        }
+
+        match statement.read("completed") {
+            Ok(value) => {
+                completed = value;
+            },
+            Err(e) => {
+                error!("Failed to read project ID {e}");
+                return None;
+            },
+        }
+
+        Some(TargetInfo::Projects(total, completed))
+    }
+
+    fn parse_project_info(&self, statement: &mut Statement) -> Option<TargetInfo> {
+        let id: i64;
+        let title: String;
+        let description: String;
+        let total: i64;
+        let completed: i64;
+        let progress: i64;
+        match statement.read("id") {
+            Ok(value) => {
+                id = value;
+            },
+            Err(e) => {
+                error!("Failed to read project ID {e}");
+                return None;
+            },
+        }
+
+
+        title = statement.read("title").unwrap();
+        description = statement.read("description").unwrap();
+
+        match statement.read("total") {
+            Ok(value) => {
+                total = value;
+            },
+            Err(e) => {
+                error!("Failed to read project ID {e}");
+                return None;
+            },
+        }
+
+        match statement.read("completed") {
+            Ok(value) => {
+                completed = value;
+            },
+            Err(e) => {
+                error!("Failed to read project ID {e}");
+                return None;
+            },
+        }
+
+        match statement.read("progress") {
+            Ok(value) => {
+                progress = value;
+            },
+            Err(e) => {
+                error!("Failed to read project ID {e}");
+                return None;
+            },
+        }
+
+
+        Some(TargetInfo::Project(id, title, description, total, completed, progress))
+    }
+
+    fn parse_task_info(&self, statement: &mut Statement) -> Option<TargetInfo> {
+        let id: i64;
+        let title: String;
+        let description: String;
+        let projectId: Option<i64>;
+        let projectTitle: Option<String>;
+        let total: i64;
+        let completed: i64;
+        let progress: i64;
+        match statement.read("id") {
+            Ok(value) => {
+                id = value;
+            },
+            Err(e) => {
+                error!("Failed to read task ID {e}");
+                return None;
+            },
+        }
+
+        title = statement.read("title").unwrap();
+        description = statement.read("description").unwrap();
+        match statement.read("projectId") {
+            Ok(value) => {
+                projectId = Some(value);
+            },
+            Err(e) => {
+                projectId = None;
+            },
+        }
+
+        projectTitle = statement.read("projectTitle").unwrap();
+
+        match statement.read("total") {
+            Ok(value) => {
+                total = value;
+            },
+            Err(e) => {
+                error!("Failed to read total {e}");
+                return None;
+            },
+        }
+
+        match statement.read("completed") {
+            Ok(value) => {
+                completed = value;
+            },
+            Err(e) => {
+                error!("Failed to read completed {e}");
+                return None;
+            },
+        }
+
+        match statement.read("progress") {
+            Ok(value) => {
+                progress = value;
+            },
+            Err(e) => {
+                error!("Failed to read progress {e}");
+                return None;
+            },
+        }
+
+
+        Some(TargetInfo::Task(id, title, description, projectId, projectTitle, total, completed, progress))
+    }
+
+    fn parse_sub_task_info(&self, statement: &mut Statement) -> Option<TargetInfo> {
+        let id: i64;
+        let title: String;
+        let description: String;
+        let parentTaskId: i64;
+        let parentTaskTitle: String;
+        let projectId: Option<i64>;
+        let projectTitle: Option<String>;
+        match statement.read("id") {
+            Ok(value) => {
+                id = value;
+            },
+            Err(e) => {
+                error!("Failed to read task ID {e}");
+                return None;
+            },
+        }
+
+        title = statement.read("title").unwrap();
+        description = statement.read("description").unwrap();
+
+        match statement.read("parentTaskId") {
+            Ok(value) => {
+                parentTaskId = value;
+            },
+            Err(e) => {
+                error!("Failed to read parent task ID {e}");
+                return None;
+            },
+        }
+
+        parentTaskTitle = statement.read("parentTaskTitle").unwrap();
+
+        match statement.read("projectId") {
+            Ok(value) => {
+                projectId = Some(value);
+            },
+            Err(e) => {
+                projectId = None;
+            },
+        }
+
+        projectTitle = statement.read("projectTitle").unwrap();
+
+        Some(TargetInfo::SubTask(id, title, description, parentTaskId, parentTaskTitle, projectId, projectTitle))
+    }
+
 
     pub fn get_sub_tasks_for_task(&self, parent_task_id: i64) -> Result<Vec<SubTask>, String> {
         let mut sub_tasks: Vec<SubTask> = vec![];
@@ -673,4 +868,94 @@ impl Database {
             },
         }
     }
+
+    pub fn get_projects_info(&self) -> Option<TargetInfo> {
+        match &self.connection {
+            Some(connection) => {
+                match connection.prepare(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), env!("SQL_VIEW_GET_PROJECTS_INFO")))) {
+                    Ok(mut statement) => {
+                        if let Ok(State::Row) = statement.next() {
+                            return self.parse_projects_info(&mut statement);
+                        }
+                    },
+                    Err(e) => {
+                        error!("Failed to get projects list {e}");
+                    },
+                }
+            },
+            None => {
+                error!("Invalid Connection");
+            }
+        }
+
+        None
+    }
+
+    pub fn get_project_info(&self, id: i64) -> Option<TargetInfo> {
+        match &self.connection {
+            Some(connection) => {
+                match connection.prepare(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), env!("SQL_VIEW_GET_PROJECT_INFO")))) {
+                    Ok(mut statement) => {
+                        statement.bind((":projectId", id)).unwrap();
+                        if let Ok(State::Row) = statement.next() {
+                            return self.parse_project_info(&mut statement);
+                        }
+                    },
+                    Err(e) => {
+                        error!("Failed to get projects list {e}");
+                    },
+                }
+            },
+            None => {
+                error!("Invalid Connection");
+            }
+        }
+
+        None
+    }
+
+    pub fn get_task_info(&self, id: i64) -> Option<TargetInfo> {
+        match &self.connection {
+            Some(connection) => {
+                match connection.prepare(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), env!("SQL_VIEW_GET_TASK_INFO")))) {
+                    Ok(mut statement) => {
+                        statement.bind((":taskId", id)).unwrap();
+                        if let Ok(State::Row) = statement.next() {
+                            return self.parse_task_info(&mut statement);
+                        }
+                    },
+                    Err(e) => {
+                        error!("Failed to get projects list {e}");
+                    },
+                }
+            },
+            None => {
+                error!("Invalid Connection");
+            }
+        }
+        None
+    }
+
+    pub fn get_sub_task_info(&self, id: i64) -> Option<TargetInfo> {
+        match &self.connection {
+            Some(connection) => {
+                match connection.prepare(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), env!("SQL_VIEW_GET_SUB_TASK_INFO")))) {
+                    Ok(mut statement) => {
+                        statement.bind((":subTaskId", id)).unwrap();
+                        if let Ok(State::Row) = statement.next() {
+                            return self.parse_sub_task_info(&mut statement);
+                        }
+                    },
+                    Err(e) => {
+                        error!("Failed to get projects list {e}");
+                    },
+                }
+            },
+            None => {
+                error!("Invalid Connection");
+            }
+        }
+        None
+    }
+
 }

@@ -1,7 +1,7 @@
 use std::clone;
 
 use crate::{
-    app::{commands::create_command, events::{Request, Response}, ui::app_widget::AppWidget, workers::{base::worker::Worker, database_worker::DatabaseWorker, history_worker::HistoryWorker}}, core::{config::Config, database_manager::Database}
+    app::{commands::create_command, events::{Request, Response, SelectionRequest, SelectionResponse}, ui::app_widget::AppWidget, workers::{base::worker::Worker, database_worker::DatabaseWorker, history_worker::HistoryWorker}}, core::{config::Config, database_manager::Database}
 };
 
 use tokio::sync::mpsc;
@@ -80,6 +80,14 @@ impl App {
                             tx.send(response).await;
                         },
                         Err(_) => {}
+                    }
+                }
+                Request::Selection(selection) => {
+                    match selection {
+                        SelectionRequest::Selected(target, first, second) => {
+                            tx.send(Response::Selection(SelectionResponse::Selected(target, first, second))).await;
+                        }
+                        _ => {},
                     }
                 }
                 Request::Exit => {

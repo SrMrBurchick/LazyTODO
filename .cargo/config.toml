@@ -24,6 +24,12 @@ SQL_UPDATE_SUB_TASK_STATE = "/src/sql/procedures/subtasks/update_state.sql"
 SQL_VIEW_GET_SUB_TASKS_BY_PARENT = "/src/sql/views/view_get_subtasks.sql"
 SQL_VIEW_GET_TASKS_BY_PROJECT = "/src/sql/views/view_get_project_tasks.sql"
 
+# INFO
+SQL_VIEW_GET_PROJECTS_INFO = "/src/sql/views/infos/view_get_projects_info.sql"
+SQL_VIEW_GET_PROJECT_INFO = "/src/sql/views/infos/view_get_project_info.sql"
+SQL_VIEW_GET_TASK_INFO = "/src/sql/views/infos/view_get_task_info.sql"
+SQL_VIEW_GET_SUB_TASK_INFO = "/src/sql/views/infos/view_get_subtask_info.sql"
+
 # Views
 SQL_VIEW_GET_NON_PROJECT_TASKS = "v_GetNonProjectTasks"
 SQL_VIEW_GET_PROJECT_TASKS = "v_GetProjectTasks"

@@ -4,7 +4,7 @@ use crossterm::event::KeyCode;
 use ratatui::widgets::ListItem;
 use tracing::info;
 
-use crate::app::{base::Target, events::{DatabaseRequest, DatabaseResponse, Request, event_listener::EventsListener}, ui::base::widget_list::WidgetListItem};
+use crate::app::{base::Target, events::{DatabaseRequest, DatabaseResponse, Request, SelectionRequest, event_listener::EventsListener}, ui::base::widget_list::WidgetListItem};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ETaskState {
@@ -192,6 +192,11 @@ impl WidgetListItem for SubTask {
 
         Ok(Request::Nothing)
     }
+
+    fn mark_selected(&self) -> Result<Request, String> {
+        Ok(Request::Selection(SelectionRequest::Selected(Target::SubTask, Some(self.parent_task_id), Some(self.id))))
+    }
+
 }
 
 impl WidgetListItem for Task {
@@ -239,6 +244,10 @@ impl WidgetListItem for Task {
         }
 
         Ok(Request::Nothing)
+    }
+
+    fn mark_selected(&self) -> Result<Request, String> {
+        Ok(Request::Selection(SelectionRequest::Selected(Target::Task, self.project_id, Some(self.id))))
     }
 }
 

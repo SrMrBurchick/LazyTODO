@@ -95,6 +95,25 @@ impl WidgetListItem for Space {
             }
         }
     }
+
+    fn mark_selected(&self) -> Result<Request, String> {
+        match self.space_type {
+            ESpaces::Home => {
+                return Ok(Request::Database(DatabaseRequest::GetInfo(Target::All, None)));
+            },
+            ESpaces::Projects => {
+                return Ok(Request::Database(DatabaseRequest::GetInfo(Target::Project, None)));
+            },
+            ESpaces::Standalone => {
+                return Ok(Request::Database(DatabaseRequest::GetInfo(Target::Task, None)));
+            }
+            _ => {
+                Ok(Request::Nothing)
+            },
+        }
+
+        // Ok(Request::Nothing)
+    }
 }
 
 

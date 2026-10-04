@@ -77,14 +77,14 @@ impl AppWidget {
 
                 response = self.receiver.recv() => {
                     if let Some(response) = response {
-                        self.handle_response(response);
+                        self.handle_response(response).await;
                     }
                 }
             }
         }
     }
 
-    fn handle_response(&mut self, response: Response) {
+    async fn handle_response(&mut self, response: Response) {
         for section in self.sections.iter_mut() {
             section.handle_response(&response);
         }

@@ -95,6 +95,30 @@ impl Worker for DatabaseWorker {
             }
             DatabaseRequest::Add(target) => {
                 Ok(Response::Nothing)
+            },
+            DatabaseRequest::GetInfo(target, id) => {
+                match target {
+                    Target::Project => {
+                        match id {
+                            Some(project_id) => {},
+                            None => {
+                                match self.database.get_projects_info() {
+                                    Some(info) => {
+                                        return Ok(Response::Database(DatabaseResponse::Info(None, info)));
+                                    },
+                                    None => {},
+                                }
+                            },
+                        }
+
+                    }
+                    _ => {},
+                }
+
+                Ok(Response::Nothing)
+            }
+            _ => {
+                Ok(Response::Nothing)
             }
         }
     }
