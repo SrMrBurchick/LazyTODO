@@ -100,7 +100,14 @@ impl Worker for DatabaseWorker {
                 match target {
                     Target::Project => {
                         match id {
-                            Some(project_id) => {},
+                            Some(project_id) => {
+                                match self.database.get_project_info(project_id) {
+                                    Some(info) => {
+                                        return Ok(Response::Database(DatabaseResponse::Info(Some(project_id), info)));
+                                    },
+                                    None => {},
+                                }
+                            },
                             None => {
                                 match self.database.get_projects_info() {
                                     Some(info) => {
@@ -111,6 +118,32 @@ impl Worker for DatabaseWorker {
                             },
                         }
 
+                    },
+                    Target::Task => {
+                        match id {
+                            Some(task_id) => {
+                                match self.database.get_task_info(task_id) {
+                                    Some(info) => {
+                                        return Ok(Response::Database(DatabaseResponse::Info(Some(task_id), info)));
+                                    },
+                                    None => {},
+                                }
+                            },
+                            None => {},
+                        }
+                    }
+                    Target::SubTask => {
+                        match id {
+                            Some(subtask_id) => {
+                                match self.database.get_sub_task_info(subtask_id) {
+                                    Some(info) => {
+                                        return Ok(Response::Database(DatabaseResponse::Info(Some(subtask_id), info)));
+                                    },
+                                    None => {},
+                                }
+                            },
+                            None => {},
+                        }
                     }
                     _ => {},
                 }

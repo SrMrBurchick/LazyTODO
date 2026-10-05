@@ -56,7 +56,7 @@ impl WidgetListItem for Project {
     }
 
     fn mark_selected(&self) -> Result<Request, String> {
-        Ok(Request::Selection(SelectionRequest::Selected(Target::Project, None, Some(self.id))))
+        Ok(Request::Database(DatabaseRequest::GetInfo(Target::Project, Some(self.id))))
     }
 }
 

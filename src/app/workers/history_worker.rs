@@ -22,6 +22,9 @@ impl HistoryWorker {
                         match database_response {
                             DatabaseResponse::Updated(_, _, _) => {
                                 return;
+                            },
+                            DatabaseResponse::Info(_, _) => {
+                                return;
                             }
                             _ => {},
                         }

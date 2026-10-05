@@ -3,7 +3,7 @@ SELECT
     t.title,
     t.description,
     t.projectId,
-    p.title AS projectTitle
+    p.title AS projectTitle,
     info.total,
     info.completed,
     CASE

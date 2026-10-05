@@ -194,7 +194,7 @@ impl WidgetListItem for SubTask {
     }
 
     fn mark_selected(&self) -> Result<Request, String> {
-        Ok(Request::Selection(SelectionRequest::Selected(Target::SubTask, Some(self.parent_task_id), Some(self.id))))
+        Ok(Request::Database(DatabaseRequest::GetInfo(Target::SubTask, Some(self.id))))
     }
 
 }
@@ -247,7 +247,7 @@ impl WidgetListItem for Task {
     }
 
     fn mark_selected(&self) -> Result<Request, String> {
-        Ok(Request::Selection(SelectionRequest::Selected(Target::Task, self.project_id, Some(self.id))))
+        Ok(Request::Database(DatabaseRequest::GetInfo(Target::Task, Some(self.id))))
     }
 }
 

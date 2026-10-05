@@ -93,10 +93,10 @@ impl Section for ContentSection {
 
                     },
                     _ => {
-                        self.active_target = None;
-                        self.projects.clear();
-                        self.tasks.clear();
-                        self.subtasks.clear();
+                        // self.active_target = None;
+                        // self.projects.clear();
+                        // self.tasks.clear();
+                        // self.subtasks.clear();
                     },
                 }
             }

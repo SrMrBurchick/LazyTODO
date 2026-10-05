@@ -4,9 +4,6 @@ use crate::app::base::{Target, TargetInfo, projects::Project, tasks::{ETaskState
 
 pub mod event_listener;
 
-pub trait SelectedItem {
-}
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum DatabaseRequest {
     Get(Target, Option<i64>),
