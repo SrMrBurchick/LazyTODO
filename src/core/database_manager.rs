@@ -27,24 +27,6 @@ impl Database {
         };
     }
 
-    fn enable_foreign_keys(&self) {
-        match &self.connection {
-            Some(connection) => {
-                match connection.execute("PRAGMA foreign_keys = ON;") {
-                    Ok(result) => {
-                        info!("Foreign keys enabled successfully! {:?}", result);
-                    },
-                    Err(error) => {
-                        error!("Failed to enable foreign_keys: {:?}", error);
-                    },
-                }
-            },
-            None => {
-            },
-        }
-
-    }
-
     pub fn is_initialized(&self) -> bool {
         return self.connection.is_some();
     }
@@ -354,6 +336,7 @@ impl Database {
         let id: i64;
         let title: String;
         let description: String;
+        let task_state: i64;
         let projectId: Option<i64>;
         let projectTitle: Option<String>;
         let total: i64;
@@ -368,6 +351,17 @@ impl Database {
                 return None;
             },
         }
+
+        match statement.read("state") {
+            Ok(value) => {
+                task_state = value;
+            },
+            Err(e) => {
+                error!("Failed to read task_state {e}");
+                return None;
+            },
+        }
+
 
         title = statement.read("title").unwrap();
         description = statement.read("description").unwrap();
@@ -413,13 +407,14 @@ impl Database {
         }
 
 
-        Some(TargetInfo::Task(id, title, description, projectId, projectTitle, total, completed, progress))
+        Some(TargetInfo::Task(id, title, description, task_state, projectId, projectTitle, total, completed, progress))
     }
 
     fn parse_sub_task_info(&self, statement: &mut Statement) -> Option<TargetInfo> {
         let id: i64;
         let title: String;
         let description: String;
+        let task_state: i64;
         let parentTaskId: i64;
         let parentTaskTitle: String;
         let projectId: Option<i64>;
@@ -436,6 +431,16 @@ impl Database {
 
         title = statement.read("title").unwrap();
         description = statement.read("description").unwrap();
+
+        match statement.read("state") {
+            Ok(value) => {
+                task_state = value;
+            },
+            Err(e) => {
+                error!("Failed to read task_state {e}");
+                return None;
+            },
+        }
 
         match statement.read("parentTaskId") {
             Ok(value) => {
@@ -460,7 +465,7 @@ impl Database {
 
         projectTitle = statement.read("projectTitle").unwrap();
 
-        Some(TargetInfo::SubTask(id, title, description, parentTaskId, parentTaskTitle, projectId, projectTitle))
+        Some(TargetInfo::SubTask(id, title, description, task_state, parentTaskId, parentTaskTitle, projectId, projectTitle))
     }
 
 

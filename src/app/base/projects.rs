@@ -3,7 +3,7 @@ use crossterm::event::KeyCode;
 use ratatui::widgets::ListItem;
 
 use crate::app::{
-    base::{Target, tasks::Task}, events::{DatabaseRequest, DatabaseResponse, Request, SelectionRequest, event_listener::EventsListener}, ui::base::widget_list::WidgetListItem
+    base::{Target, tasks::Task}, events::{DatabaseRequest, DatabaseResponse, Request, SelectionRequest, event_listener::EventsListener}, ui::views::list_view::ListViewItem
 };
 
 #[derive(Default, Debug, Clone)]
@@ -35,7 +35,7 @@ impl fmt::Display for Project {
     }
 }
 
-impl WidgetListItem for Project {
+impl ListViewItem for Project {
     fn display(&self) -> String {
         format!("{}", self.title)
     }
@@ -67,6 +67,6 @@ impl EventsListener for Project {
     }
 }
 
-pub fn projects_to_widget_list(items: &Vec<Project>) -> Vec<Box<dyn WidgetListItem>> {
-    items.into_iter().map(|item| Box::new(item.clone()) as Box<dyn WidgetListItem>).collect()
+pub fn projects_to_widget_list(items: &Vec<Project>) -> Vec<Box<dyn ListViewItem>> {
+    items.into_iter().map(|item| Box::new(item.clone()) as Box<dyn ListViewItem>).collect()
 }

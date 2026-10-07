@@ -2,6 +2,7 @@ SELECT
     st.id,
     st.title,
     st.description,
+    st.state,
     st.parentTaskId,
     t.title AS parentTaskTitle,
     t.projectId,

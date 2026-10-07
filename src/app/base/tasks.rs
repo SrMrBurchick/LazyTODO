@@ -4,7 +4,7 @@ use crossterm::event::KeyCode;
 use ratatui::widgets::ListItem;
 use tracing::info;
 
-use crate::app::{base::Target, events::{DatabaseRequest, DatabaseResponse, Request, SelectionRequest, event_listener::EventsListener}, ui::base::widget_list::WidgetListItem};
+use crate::app::{base::Target, events::{DatabaseRequest, DatabaseResponse, Request, SelectionRequest, event_listener::EventsListener}, ui::{views::list_view::ListViewItem}};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ETaskState {
@@ -158,7 +158,7 @@ impl TryFrom<i64> for ETaskState {
     }
 }
 
-impl WidgetListItem for SubTask {
+impl ListViewItem for SubTask {
     fn display(&self) -> String {
         format!("{}", self.title)
     }
@@ -199,7 +199,7 @@ impl WidgetListItem for SubTask {
 
 }
 
-impl WidgetListItem for Task {
+impl ListViewItem for Task {
     fn display(&self) -> String {
         format!("{}", self.title)
     }
@@ -251,10 +251,10 @@ impl WidgetListItem for Task {
     }
 }
 
-pub fn tasks_to_widget_list(tasks: &Vec<Task>) -> Vec<Box<dyn WidgetListItem>> {
-    tasks.into_iter().map(|task| Box::new(task.clone()) as Box<dyn WidgetListItem>).collect()
+pub fn tasks_to_widget_list(tasks: &Vec<Task>) -> Vec<Box<dyn ListViewItem>> {
+    tasks.into_iter().map(|task| Box::new(task.clone()) as Box<dyn ListViewItem>).collect()
 }
 
-pub fn sub_tasks_to_widget_list(items: &Vec<SubTask>) -> Vec<Box<dyn WidgetListItem>> {
-    items.into_iter().map(|item| Box::new(item.clone()) as Box<dyn WidgetListItem>).collect()
+pub fn sub_tasks_to_widget_list(items: &Vec<SubTask>) -> Vec<Box<dyn ListViewItem>> {
+    items.into_iter().map(|item| Box::new(item.clone()) as Box<dyn ListViewItem>).collect()
 }

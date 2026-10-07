@@ -6,6 +6,7 @@ pub mod content_section;
 pub mod inspector_section;
 
 pub trait Inspectable {
+    fn get_path(&self) -> Option<String>;
     fn get_name(&self) -> Option<String>;
     fn get_description(&self) -> Option<String>;
     fn render_content(&self, area: Rect, buf: &mut Buffer);

@@ -17,7 +17,8 @@ use crate::app::events::event_listener::EventsListener;
 use crate::app::events::{DatabaseResponse, Request};
 use crate::app::ui::sections::{ESectionId, ESubsectionId};
 use crate::app::ui::views::base::view::View;
-use crate::app::{events::Response, ui::{base::widget_list::WidgetListItem, sections::base::section::Section, styles, views::list_view::ListView}};
+use crate::app::ui::views::list_view::ListViewItem;
+use crate::app::{events::Response, ui::{sections::base::section::Section, styles, views::list_view::ListView}};
 
 pub struct ContentSection {
     view: ListView,
@@ -117,7 +118,7 @@ impl Section for ContentSection {
         // content
         match &self.active_target {
             Some(target) => {
-                let mut view_data: Vec<Box<dyn WidgetListItem>> = vec![];
+                let mut view_data: Vec<Box<dyn ListViewItem>> = vec![];
                 match target {
                     Target::Task => {
                         view_data = tasks_to_widget_list(&self.tasks);

@@ -13,7 +13,8 @@ use crate::app::base::Target;
 use crate::app::events::{DatabaseRequest, Request};
 use crate::app::ui::sections::ESectionId;
 use crate::app::ui::views::base::view::View;
-use crate::app::{events::Response, ui::{base::widget_list::WidgetListItem, sections::base::section::Section, styles, views::list_view::ListView}};
+use crate::app::ui::views::list_view::ListViewItem;
+use crate::app::{events::Response, ui::{sections::base::section::Section, styles, views::list_view::ListView}};
 
 enum ESpaces {
     Home = 0,
@@ -64,7 +65,7 @@ impl From<&Space> for ListItem<'_> {
     }
 }
 
-impl WidgetListItem for Space {
+impl ListViewItem for Space {
     fn display(&self) -> String {
         format!("{self}")
     }

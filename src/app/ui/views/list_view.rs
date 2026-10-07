@@ -10,15 +10,21 @@ use ratatui::widgets::{
 };
 use ratatui::{DefaultTerminal, symbols};
 
-
-
 use crate::app::events::{Request, Response};
-use crate::app::ui::base::widget_list::*;
 use crate::app::ui::styles;
 use crate::app::ui::views::base::view::{self, View};
 
+
+pub trait ListViewItem {
+    fn display(&self) -> String;
+    fn render(&self) -> ListItem<'_>;
+    fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<Request, String>;
+    fn mark_selected(&self) -> Result<Request, String>;
+}
+
 pub struct ListView {
-    list: WidgetList,
+    state: ListState,
+    data: Vec<Box<dyn ListViewItem>>,
     title: String,
 }
 
@@ -33,59 +39,60 @@ const fn alternate_colors(i: usize) -> Color {
 impl ListView {
     pub fn new(title: &str) -> Self {
         ListView {
-            list: WidgetList::default(),
+            state: ListState::default(),
+            data: vec![],
             title: title.to_string()
         }
     }
 
     pub fn clean(&mut self) {
-        self.list.items.clear();
+        self.data.clear();
     }
 
-    pub fn add_item(&mut self, item: Box<dyn WidgetListItem>) {
-        self.list.items.push(item);
+    pub fn add_item(&mut self, item: Box<dyn ListViewItem>) {
+        self.data.push(item);
     }
 
-    pub fn set_items(&mut self, items: Vec<Box<dyn WidgetListItem>>) {
-        self.list.items = items;
+    pub fn set_items(&mut self, items: Vec<Box<dyn ListViewItem>>) {
+        self.data = items;
     }
 
-    pub fn append_items(&mut self, items: Vec<Box<dyn WidgetListItem>>) {
-        self.list.items.extend(items);
+    pub fn append_items(&mut self, items: Vec<Box<dyn ListViewItem>>) {
+        self.data.extend(items);
     }
 
     pub fn select_none(&mut self) {
-        self.list.state.select(None);
+        self.state.select(None);
     }
 
     pub fn select_next(&mut self) {
-        self.list.state.select_next();
+        self.state.select_next();
     }
 
     pub fn select_previous(&mut self) {
-        self.list.state.select_previous();
+        self.state.select_previous();
     }
 
     pub const fn select_first(&mut self) {
-        self.list.state.select_first();
+        self.state.select_first();
     }
 
     pub const fn select_last(&mut self) {
-        self.list.state.select_last();
+        self.state.select_last();
     }
 
     pub const fn selected(&self) -> Option<usize> {
-        self.list.state.selected()
+        self.state.selected()
     }
 
     pub fn select(&mut self, id: Option<usize>) {
-        match self.list.state.select(id) {
+        match self.state.select(id) {
             _ => {},
         };
     }
 
     fn handle_navigation(&mut self, key: crossterm::event::KeyEvent)  -> Result<crate::app::events::Request, String> {
-        let prev_selected = self.list.state.selected();
+        let prev_selected = self.state.selected();
 
         match key.code {
             KeyCode::Char('h') => self.select_none(),
@@ -99,10 +106,10 @@ impl ListView {
 
         match prev_selected {
             Some(selected) => {
-                match self.list.state.selected() {
+                match self.state.selected() {
                     Some(current_selected) => {
                         if selected != current_selected {
-                            match self.list.items.get(current_selected) {
+                            match self.data.get(current_selected) {
                                 Some(item) => {
                                     return item.mark_selected();
                                 },
@@ -122,8 +129,10 @@ impl ListView {
 }
 
 impl View for ListView {
+    type ViewData = Vec<Box<dyn ListViewItem>>;
     fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
         match self.handle_navigation(key) {
+
             Ok(request) => {
                 if request != Request::Nothing {
                     return Ok(request);
@@ -131,11 +140,23 @@ impl View for ListView {
             },
             Err(_) => {},
         }
-        self.list.handle_key(key)
+
+        match self.state.selected() {
+            Some(id) => {
+                match self.data.get_mut(id) {
+                    Some(item) => {
+                        return item.handle_key(key);
+                    },
+                    None => {},
+                }
+            },
+            None => {},
+        }
+
+        Ok(Request::Nothing)
     }
 
-    fn render_data(&mut self, area: Rect, buf: &mut Buffer, data: &Vec<Box<dyn WidgetListItem>>)
-    {
+    fn render_data(&mut self, area: Rect, buf: &mut Buffer, data: &Self::ViewData) {
         let block = Block::new()
             .title(Line::raw(self.title.as_str()).centered())
             .borders(Borders::ALL)
@@ -162,7 +183,7 @@ impl View for ListView {
 
         // We need to disambiguate this trait method as both `Widget` and `StatefulWidget` share the
         // same method name `render`.
-        StatefulWidget::render(list, area, buf, &mut self.list.state);
+        StatefulWidget::render(list, area, buf, &mut self.state);
 
     }
 
@@ -176,8 +197,7 @@ impl View for ListView {
 
         // Iterate through all elements in the `items` and stylize them.
         let items: Vec<ListItem> = self
-            .list
-            .items
+            .data
             .iter()
             .enumerate()
             .map(|(i, item)| {
@@ -194,6 +214,6 @@ impl View for ListView {
 
         // We need to disambiguate this trait method as both `Widget` and `StatefulWidget` share the
         // same method name `render`.
-        StatefulWidget::render(list, area, buf, &mut self.list.state);
+        StatefulWidget::render(list, area, buf, &mut self.state);
     }
 }

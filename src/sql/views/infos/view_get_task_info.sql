@@ -2,6 +2,7 @@ SELECT
     t.id,
     t.title,
     t.description,
+    t.state,
     t.projectId,
     p.title AS projectTitle,
     info.total,

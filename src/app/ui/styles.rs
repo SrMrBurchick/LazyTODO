@@ -5,26 +5,26 @@ use ratatui::{style::Color, text::Line, widgets::ListItem};
 use crate::app::base::projects::Project;
 use crate::app::base::tasks::{ETaskState, SubTask, Task};
 
+// Кучeряві кольори
 pub const TODO_HEADER_STYLE: Style = Style::new()
     .fg(Color::Rgb(145, 174, 190))   // cold desaturated blue
     .bg(Color::Rgb(12, 15, 18));     // graphite black
-
-pub const NORMAL_ROW_BG: Color =
-    Color::Rgb(15, 18, 22);
-
-pub const ALT_ROW_BG_COLOR: Color =
-    Color::Rgb(18, 22, 27);
 
 pub const SELECTED_STYLE: Style = Style::new()
     .fg(Color::Rgb(218, 228, 234))   // cold white
     .bg(Color::Rgb(38, 49, 58))      // wet asphalt / blue-gray
     .add_modifier(Modifier::BOLD);
 
-pub const TEXT_FG_COLOR: Color =
-    Color::Rgb(172, 184, 191);       // overcast gray
-
-pub const COMPLETED_TEXT_FG_COLOR: Color =
-    Color::Rgb(104, 126, 137);       // faded cold gray-blue
+pub const NORMAL_ROW_BG: Color = Color::Rgb(15, 18, 22);
+pub const ALT_ROW_BG_COLOR: Color = Color::Rgb(18, 22, 27);
+pub const TEXT_FG_COLOR: Color = Color::Rgb(172, 184, 191);       // overcast gray
+pub const COMPLETED_TEXT_FG_COLOR: Color = Color::Rgb(104, 126, 137);       // faded cold gray-blue
+pub const METRIC_CARD_BG: Color = Color::Rgb(17, 24, 29);
+pub const METRIC_BORDER_COLOR: Color = Color::Rgb(30, 42, 49);
+pub const METRIC_LABEL_COLOR: Color = Color::Rgb(104, 126, 137);
+pub const METRIC_VALUE_COLOR: Color = Color::Rgb(218, 228, 234);
+pub const METRIC_HIGHLIGHT_COLOR: Color = Color::Rgb(124, 247, 196);
+pub const PROGRESS_TRACK_BG: Color = Color::Rgb(23, 33, 40);
 
 impl From<&Project> for ListItem<'_> {
     fn from(value: &Project) -> Self {
