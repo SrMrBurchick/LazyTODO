@@ -46,8 +46,8 @@ impl InspectorView {
         self.data = None;
     }
 
-    pub fn set_data(&mut self, data: &InspectorData) {
-        self.data = Some(data.clone());
+    pub fn set_data(&mut self, data: InspectorData) {
+        self.data = Some(data);
     }
 
     // pub fn select_none(&mut self) {

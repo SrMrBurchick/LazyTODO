@@ -1,8 +1,4 @@
-use ratatui::{layout::{Constraint, Layout}, symbols, widgets::{Block, Borders, Paragraph, Widget}};
-use ratatui::text::Line;
-use ratatui::style::{Color, Modifier, Style, Stylize};
-
-use crate::app::{base::tasks::ETaskState, ui::{sections::Inspectable, styles, views::{inspector_view::InspectorData, metric_bar_view::MetricBarData, metric_view::MetricData}}};
+use crate::app::{base::tasks::ETaskState, ui::{views::{inspector_view::InspectorData, metric_bar_view::MetricBarData, metric_view::MetricData}}};
 
 pub mod projects;
 pub mod tasks;
@@ -93,21 +89,7 @@ impl TryFrom<TargetInfo> for InspectorData {
                     },
                     item_name: name,
                     item_description: description,
-                    item_status: match Some(ETaskState::try_from(status)) {
-                        Some(result) => {
-                            match result {
-                                Ok(task_status) => {
-                                    Some(task_status)
-                                },
-                                Err(_) => {
-                                    None
-                                },
-                            }
-                        },
-                        None => {
-                            None
-                        },
-                    },
+                    item_status: ETaskState::try_from(status).ok(),
                     metrics: vec![
                         MetricData {
                             title: "Total".to_string(),
@@ -140,21 +122,7 @@ impl TryFrom<TargetInfo> for InspectorData {
                     },
                     item_name: name,
                     item_description: description,
-                    item_status: match Some(ETaskState::try_from(status)) {
-                        Some(result) => {
-                            match result {
-                                Ok(task_status) => {
-                                    Some(task_status)
-                                },
-                                Err(_) => {
-                                    None
-                                },
-                            }
-                        },
-                        None => {
-                            None
-                        },
-                    },
+                    item_status: ETaskState::try_from(status).ok(),
                     metrics: vec![],
                     progress: None,
                     identity: Some((Target::SubTask, id))
@@ -165,20 +133,4 @@ impl TryFrom<TargetInfo> for InspectorData {
         }
     }
 
-}
-impl Inspectable for TargetInfo {
-    fn get_path(&self) -> Option<String> {
-        None
-    }
-
-    fn get_name(&self) -> Option<String> {
-        None
-    }
-
-    fn get_description(&self) -> Option<String> {
-        None
-    }
-
-    fn render_content(&self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
-    }
 }
