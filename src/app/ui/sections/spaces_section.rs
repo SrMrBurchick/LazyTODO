@@ -61,7 +61,7 @@ impl std::fmt::Display for Space {
 
 impl From<&Space> for ListItem<'_> {
     fn from(value: &Space) -> Self {
-        ListItem::new(Line::styled(format!("{value}"), styles::TEXT_FG_COLOR))
+        ListItem::new(Line::styled(format!("{value}"), styles::TITLE_FG_COLOR))
     }
 }
 
@@ -140,7 +140,8 @@ impl Section for SpacesSection {
         self.view.add_item(Box::new(Space::new("SCHEDULED", "⚑", ESpaces::Scheduled)));
     }
 
-    fn handle_response(&mut self, response: &Response) {
+    fn handle_response(&mut self, response: &Response) -> Result<Request, String> {
+        Ok(Request::Nothing)
     }
 
     fn reset(&mut self) {
@@ -157,5 +158,9 @@ impl Section for SpacesSection {
     fn render(&mut self, area: Rect, buf: &mut Buffer) {
         // content
         self.view.render(area, buf);
+    }
+
+    fn mark_selected(&mut self, is_selected: bool) {
+        self.view.mark_selected(is_selected);
     }
 }

@@ -1,65 +1,163 @@
-use ratatui::style::{Modifier, Style};
-use ratatui::style::palette::tailwind::{BLUE, GREEN, SLATE};
-use ratatui::{style::Color, text::Line, widgets::ListItem};
+use ratatui::{
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
+    widgets::ListItem,
+};
 
 use crate::app::base::projects::Project;
 use crate::app::base::tasks::{ETaskState, SubTask, Task};
 
-// Кучeряві кольори
+// Main UI
 pub const TODO_HEADER_STYLE: Style = Style::new()
-    .fg(Color::Rgb(145, 174, 190))   // cold desaturated blue
-    .bg(Color::Rgb(12, 15, 18));     // graphite black
+    .fg(Color::Rgb(145, 174, 190))
+    .bg(Color::Rgb(12, 15, 18));
 
 pub const SELECTED_STYLE: Style = Style::new()
-    .fg(Color::Rgb(218, 228, 234))   // cold white
-    .bg(Color::Rgb(38, 49, 58))      // wet asphalt / blue-gray
+    .fg(Color::Rgb(218, 228, 234))
+    .bg(Color::Rgb(32, 43, 51))
     .add_modifier(Modifier::BOLD);
 
-pub const NORMAL_ROW_BG: Color = Color::Rgb(15, 18, 22);
-pub const ALT_ROW_BG_COLOR: Color = Color::Rgb(18, 22, 27);
-pub const TEXT_FG_COLOR: Color = Color::Rgb(172, 184, 191);       // overcast gray
-pub const COMPLETED_TEXT_FG_COLOR: Color = Color::Rgb(104, 126, 137);       // faded cold gray-blue
-pub const METRIC_CARD_BG: Color = Color::Rgb(17, 24, 29);
-pub const METRIC_BORDER_COLOR: Color = Color::Rgb(30, 42, 49);
-pub const METRIC_LABEL_COLOR: Color = Color::Rgb(104, 126, 137);
-pub const METRIC_VALUE_COLOR: Color = Color::Rgb(218, 228, 234);
-pub const METRIC_HIGHLIGHT_COLOR: Color = Color::Rgb(124, 247, 196);
-pub const PROGRESS_TRACK_BG: Color = Color::Rgb(23, 33, 40);
+// Selected section
+pub const SELECTED_SECTION_COLOR: Color =
+    Color::Rgb(72, 102, 118);
 
-impl From<&Project> for ListItem<'_> {
-    fn from(value: &Project) -> Self {
-        ListItem::new(Line::styled(format!("{}", value.title), TEXT_FG_COLOR))
+// Rows
+pub const NORMAL_ROW_BG: Color =
+    Color::Rgb(15, 18, 22);
+
+pub const ALT_ROW_BG_COLOR: Color =
+    Color::Rgb(18, 22, 27);
+
+// Text hierarchy
+pub const TITLE_FG_COLOR: Color =
+    Color::Rgb(196, 207, 214);
+
+pub const DESCRIPTION_FG_COLOR: Color =
+    Color::Rgb(112, 126, 136);
+
+pub const COMPLETED_TEXT_FG_COLOR: Color =
+    Color::Rgb(120, 136, 145);
+
+// Status marks
+pub const TODO_MARK_FG_COLOR: Color =
+    Color::Rgb(104, 126, 137);
+
+pub const COMPLETED_MARK_FG_COLOR: Color =
+    Color::Rgb(124, 170, 150);
+
+pub const IN_PROGRESS_MARK_FG_COLOR: Color =
+    Color::Rgb(201, 179, 122);
+
+// Inspector / metrics
+pub const METRIC_CARD_BG: Color =
+    Color::Rgb(17, 24, 29);
+
+pub const METRIC_BORDER_COLOR: Color =
+    Color::Rgb(30, 42, 49);
+
+pub const METRIC_LABEL_COLOR: Color =
+    Color::Rgb(104, 126, 137);
+
+pub const METRIC_VALUE_COLOR: Color =
+    Color::Rgb(218, 228, 234);
+
+pub const METRIC_HIGHLIGHT_COLOR: Color =
+    Color::Rgb(124, 247, 196);
+
+pub const PROGRESS_TRACK_BG: Color =
+    Color::Rgb(23, 33, 40);
+
+
+impl<'a> From<&'a Project> for ListItem<'a> {
+    fn from(value: &'a Project) -> Self {
+        ListItem::new(
+            Line::styled(
+                value.title.as_str(),
+                Style::default()
+                    .fg(TITLE_FG_COLOR)
+                    .add_modifier(Modifier::BOLD),
+            )
+        )
     }
 }
 
-impl From<&Task> for ListItem<'_> {
-    fn from(value: &Task) -> Self {
-        let mut color = TEXT_FG_COLOR;
-        let mut prefix = "☐";
-        match value.state {
-            ETaskState::Completed => {
-                prefix = "✓";
-                color = COMPLETED_TEXT_FG_COLOR;
-            }
-            _ => {},
-        }
+impl<'a> From<&'a Task> for ListItem<'a> {
+    fn from(value: &'a Task) -> Self {
+        let (prefix, prefix_color, title_color) = match value.state {
+            ETaskState::Completed => (
+                "✓",
+                COMPLETED_MARK_FG_COLOR,
+                COMPLETED_TEXT_FG_COLOR,
+            ),
+            ETaskState::InProgress => (
+                "◐",
+                IN_PROGRESS_MARK_FG_COLOR,
+                TITLE_FG_COLOR,
+            ),
+            _ => (
+                "☐",
+                TODO_MARK_FG_COLOR,
+                TITLE_FG_COLOR,
+            ),
+        };
 
-        ListItem::new(Line::styled(format!("{} {} - {}", prefix, value.title, value.description), color))
+        ListItem::new(vec![
+            Line::from(vec![
+                Span::styled(
+                    format!("{prefix} "),
+                    Style::default().fg(prefix_color),
+                ),
+
+                Span::styled(
+                    value.title.as_str(),
+                    Style::default()
+                        .fg(title_color)
+                        .add_modifier(Modifier::BOLD),
+                ),
+            ]),
+
+            Line::styled(
+                format!("   {}", value.description),
+                Style::default().fg(DESCRIPTION_FG_COLOR),
+            ),
+        ])
     }
 }
 
-impl From<&SubTask> for ListItem<'_> {
-    fn from(value: &SubTask) -> Self {
-        let mut color = TEXT_FG_COLOR;
-        let mut prefix = "☐";
-        match value.state {
-            ETaskState::Completed => {
-                prefix = "✓";
-                color = COMPLETED_TEXT_FG_COLOR;
-            }
-            _ => {},
-        }
+impl<'a> From<&'a SubTask> for ListItem<'a> {
+    fn from(value: &'a SubTask) -> Self {
+        let (prefix, prefix_color, title_color) = match value.state {
+            ETaskState::Completed => (
+                "✓",
+                COMPLETED_MARK_FG_COLOR,
+                COMPLETED_TEXT_FG_COLOR,
+            ),
+            ETaskState::InProgress => (
+                "◐",
+                IN_PROGRESS_MARK_FG_COLOR,
+                TITLE_FG_COLOR,
+            ),
+            _ => (
+                "☐",
+                TODO_MARK_FG_COLOR,
+                TITLE_FG_COLOR,
+            ),
+        };
 
-        ListItem::new(Line::styled(format!("{} {value}", prefix), color))
+        ListItem::new(
+            Line::from(vec![
+                Span::styled(
+                    format!("{prefix} "),
+                    Style::default().fg(prefix_color),
+                ),
+
+                Span::styled(
+                    value.title.as_str(),
+                    Style::default()
+                        .fg(title_color)
+                        .add_modifier(Modifier::BOLD),
+                ),
+            ])
+        )
     }
 }

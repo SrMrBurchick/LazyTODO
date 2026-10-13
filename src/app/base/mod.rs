@@ -1,5 +1,5 @@
 use crate::app::{base::tasks::ETaskState, ui::{views::{inspector_view::InspectorData, metric_bar_view::MetricBarData, metric_view::MetricData}}};
-
+use std::fmt;
 pub mod projects;
 pub mod tasks;
 
@@ -22,6 +22,24 @@ pub enum TargetInfo {
     Task(i64, String, String, i64, Option<i64>, Option<String>, i64, i64, i64),
     // Id / Title / Description / TaskState / ParentTaskId / ParentTaskTitle / ProjectId / ProjectTitle
     SubTask(i64, String, String, i64, i64, String, Option<i64>, Option<String>),
+}
+
+impl fmt::Display for Target {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Target::Project => {
+                writeln!(f, "Project")?;
+            },
+            Target::Task => {
+                writeln!(f, "Task")?;
+            },
+            Target::SubTask => {
+                writeln!(f, "SubTask")?;
+            }
+            _ => {},
+        }
+        Ok(())
+    }
 }
 
 impl TryFrom<TargetInfo> for InspectorData {

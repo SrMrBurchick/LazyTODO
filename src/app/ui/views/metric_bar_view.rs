@@ -132,4 +132,7 @@ impl View for MetricBarView {
         let data = self.data.clone();
         self.render_data(area, buf, &data);
     }
+
+    fn mark_selected(&mut self, is_selected: bool) {
+    }
 }

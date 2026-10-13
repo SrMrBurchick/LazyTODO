@@ -1,6 +1,10 @@
 use std::fmt;
 
-use crate::app::base::{Target, TargetInfo, projects::Project, tasks::{ETaskState, SubTask, Task}};
+use crate::app::base::{
+    projects::Project,
+    tasks::{ETaskState, SubTask, Task},
+    Target, TargetInfo,
+};
 
 pub mod event_listener;
 
@@ -10,25 +14,25 @@ pub enum DatabaseRequest {
     GetInfo(Target, Option<i64>),
     Add(Target),
     UpdateState(Target, ETaskState, i64),
-    Delete(Target, i64)
+    Delete(Target, i64),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum HistoryRequest {
     GetPrevious,
-    GetNext
+    GetNext,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum NavigationRequest {
     GetPrevious,
-    GetNext
+    GetNext,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SelectionRequest {
     Selected(Target, Option<i64>, Option<i64>),
-    Nothing
+    Nothing,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -37,7 +41,7 @@ pub enum Request {
     History(HistoryRequest),
     Selection(SelectionRequest),
     Exit,
-    Nothing
+    Nothing,
 }
 
 #[derive(Clone, Debug)]
@@ -47,19 +51,19 @@ pub enum DatabaseResponse {
     Info(Option<i64>, TargetInfo),
     SubTasks(Vec<SubTask>),
     All(Vec<Project>, Vec<Task>),
-    Updated(Target, ETaskState, Option<i64>)
+    Updated(Target, ETaskState, Option<i64>),
 }
 
 #[derive(Clone, Debug)]
 enum HistoryResponse {
     Previous(Option<DatabaseResponse>),
-    Next(Option<DatabaseResponse>)
+    Next(Option<DatabaseResponse>),
 }
 
 #[derive(Clone, Debug)]
 pub enum SelectionResponse {
     Selected(Target, Option<i64>, Option<i64>),
-    Nothing
+    Nothing,
 }
 
 #[derive(Clone, Debug)]
@@ -67,6 +71,59 @@ pub enum Response {
     Database(DatabaseResponse),
     History(HistoryResponse),
     Selection(SelectionResponse),
-    Nothing
+    Nothing,
 }
 
+impl fmt::Display for DatabaseResponse {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Database response:")?;
+        match self {
+            DatabaseResponse::Projects(projects) => {
+                for project in projects {
+                    writeln!(f, "{project}")?;
+                }
+            },
+            DatabaseResponse::All(projects, tasks) => {
+                for project in projects {
+                    writeln!(f, "{project}")?;
+                }
+
+                for task in tasks {
+                    writeln!(f, "{task}")?;
+                }
+            },
+            DatabaseResponse::Tasks(tasks) => {
+                for task in tasks {
+                    writeln!(f, "{task}")?;
+                }
+            },
+            DatabaseResponse::SubTasks(tasks) => {
+                for task in tasks {
+                    writeln!(f, "{task}")?;
+                }
+            },
+            DatabaseResponse::Updated(target, state, id) => {
+                writeln!(f, "{target} {state} {:?}", id)?;
+            }
+            _ => {
+                writeln!(f, "Unknown database response")?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl fmt::Display for Response {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Response::Database(response) => {
+                writeln!(f, "{response}")?;
+            },
+            _ => {
+                writeln!(f, "Unknown response")?;
+            }
+        };
+        Ok(())
+    }
+}

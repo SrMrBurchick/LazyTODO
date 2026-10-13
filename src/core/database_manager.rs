@@ -821,9 +821,10 @@ impl Database {
     }
 
     pub fn update_task_state(&self, id: i64, state: ETaskState) {
+        info!("Set new state {state} for task: {id}");
         match &self.connection {
             Some(connection) => {
-                match connection.prepare(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), env!("SQL_UPDATE_SUB_TASK")))) {
+                match connection.prepare(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), env!("SQL_UPDATE_TASK_STATE")))) {
                     Ok(mut statement) => {
                         statement.bind((":targetId", id)).unwrap();
                         statement.bind((":newState", state as i64)).unwrap();

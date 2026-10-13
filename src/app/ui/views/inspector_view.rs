@@ -33,12 +33,14 @@ pub struct InspectorData {
 
 pub struct InspectorView {
     data: Option<InspectorData>,
+    selected: bool
 }
 
 impl InspectorView {
     pub fn new() -> Self {
         InspectorView {
-            data: None
+            data: None,
+            selected: false
         }
     }
 
@@ -128,11 +130,11 @@ impl View for InspectorView {
         let block = Block::new()
             .title(Line::styled(
                 " INSPECT ",
-                Style::default().fg(styles::TODO_HEADER_STYLE.fg.unwrap_or(styles::TEXT_FG_COLOR)))
+                Style::default().fg(styles::TODO_HEADER_STYLE.fg.unwrap_or(styles::TITLE_FG_COLOR)))
             )
             .title_alignment(Alignment::Center)
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(styles::METRIC_BORDER_COLOR))
+            .border_style(Style::default().fg(if self.selected {styles::SELECTED_SECTION_COLOR} else {styles::METRIC_BORDER_COLOR}))
             .style(Style::default().bg(styles::NORMAL_ROW_BG))
             .padding(Padding::horizontal(1));
 
@@ -242,14 +244,14 @@ impl View for InspectorView {
         };
 
         Paragraph::new(type_text)
-            .style(Style::default().fg(styles::TODO_HEADER_STYLE.fg.unwrap_or(styles::TEXT_FG_COLOR)))
+            .style(Style::default().fg(styles::TODO_HEADER_STYLE.fg.unwrap_or(styles::TITLE_FG_COLOR)))
             .render(type_area, buf);
 
         //
         // Description
         //
         Paragraph::new(data.item_description.as_str())
-            .style(Style::default().fg(styles::TEXT_FG_COLOR))
+            .style(Style::default().fg(styles::TITLE_FG_COLOR))
             .wrap(Wrap { trim: true })
             .render(description_area, buf);
 
@@ -298,16 +300,20 @@ impl View for InspectorView {
                 let block = Block::new()
                     .title(Line::styled(
                         " INSPECT ",
-                        Style::default().fg(styles::TODO_HEADER_STYLE.fg.unwrap_or(styles::TEXT_FG_COLOR)))
+                        Style::default().fg(styles::TODO_HEADER_STYLE.fg.unwrap_or(styles::TITLE_FG_COLOR)))
                     )
                     .title_alignment(Alignment::Center)
                     .borders(Borders::ALL)
-                    .border_style(Style::default().fg(styles::METRIC_BORDER_COLOR))
+                    .border_style(Style::default().fg(if self.selected {styles::SELECTED_SECTION_COLOR} else {styles::METRIC_BORDER_COLOR}))
                     .style(Style::default().bg(styles::NORMAL_ROW_BG))
                     .padding(Padding::horizontal(1));
 
                 block.render(area, buf);
             },
         }
+    }
+
+    fn mark_selected(&mut self, is_selected: bool) {
+        self.selected = is_selected;
     }
 }

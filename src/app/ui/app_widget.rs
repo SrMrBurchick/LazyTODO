@@ -86,7 +86,19 @@ impl AppWidget {
 
     async fn handle_response(&mut self, response: Response) {
         for section in self.sections.iter_mut() {
-            section.handle_response(&response);
+            match section.handle_response(&response) {
+                Ok(request) => {
+                    match request {
+                        Request::Nothing => {
+
+                        }
+                        _ => {
+                            self.sender.send(request).await;
+                        },
+                    }
+                },
+                Err(_) => {},
+            }
         }
     }
 
@@ -114,6 +126,7 @@ impl AppWidget {
                                 Some(section_id) => {
                                     let is_same_section = std::mem::discriminant(&section_id) == std::mem::discriminant(&active_id);
                                     if is_same_section {
+                                        section.mark_selected(true);
                                         match section.handle_key(key) {
                                             Ok(request) => {
                                                 self.sender.send(request).await;
@@ -121,7 +134,7 @@ impl AppWidget {
                                             Err(_) => {},
                                         };
                                     } else {
-
+                                        section.mark_selected(false);
                                     }
                                 },
                                 None => {},

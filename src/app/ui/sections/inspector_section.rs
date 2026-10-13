@@ -30,7 +30,7 @@ impl Section for InspectorSection {
         Some(ESectionId::Inspector)
     }
 
-    fn handle_response(&mut self, response: &Response) {
+    fn handle_response(&mut self, response: &Response) -> Result<Request, String> {
         match response {
             Response::Database(database_response) => {
                 match database_response {
@@ -49,6 +49,12 @@ impl Section for InspectorSection {
             _ => {
             },
         }
+
+        Ok(Request::Nothing)
+    }
+
+    fn mark_selected(&mut self, is_selected: bool) {
+        self.view.mark_selected(is_selected);
     }
 
     fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<Request, String> {

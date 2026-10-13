@@ -1,6 +1,6 @@
 use crossterm::event::KeyCode;
 use ratatui::buffer::Buffer;
-use ratatui::layout::{Constraint, Layout, Rect};
+use ratatui::layout::{Alignment, Constraint, Layout, Rect};
 use ratatui::style::palette::tailwind::{BLUE, GREEN, SLATE};
 use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::text::Line;
@@ -26,6 +26,7 @@ pub struct ListView {
     state: ListState,
     data: Vec<Box<dyn ListViewItem>>,
     title: String,
+    selected: bool
 }
 
 const fn alternate_colors(i: usize) -> Color {
@@ -41,7 +42,8 @@ impl ListView {
         ListView {
             state: ListState::default(),
             data: vec![],
-            title: title.to_string()
+            title: title.to_string(),
+            selected: false
         }
     }
 
@@ -189,11 +191,15 @@ impl View for ListView {
 
     fn render(&mut self, area: Rect, buf: &mut Buffer) {
         let block = Block::new()
-            .title(Line::raw(self.title.as_str()).centered())
+            .title(Line::styled(
+                format!(" {} ", self.title.to_uppercase().as_str()),
+                Style::default().fg(styles::TODO_HEADER_STYLE.fg.unwrap_or(styles::TITLE_FG_COLOR)))
+            )
+            .title_alignment(Alignment::Center)
             .borders(Borders::ALL)
-            .border_set(symbols::border::EMPTY)
-            .border_style(styles::TODO_HEADER_STYLE)
-            .bg(styles::NORMAL_ROW_BG);
+            .border_style(Style::default().fg(if self.selected {styles::SELECTED_SECTION_COLOR} else {styles::METRIC_BORDER_COLOR}))
+            .style(Style::default().bg(styles::NORMAL_ROW_BG))
+            .padding(Padding::horizontal(1));
 
         // Iterate through all elements in the `items` and stylize them.
         let items: Vec<ListItem> = self
@@ -215,5 +221,9 @@ impl View for ListView {
         // We need to disambiguate this trait method as both `Widget` and `StatefulWidget` share the
         // same method name `render`.
         StatefulWidget::render(list, area, buf, &mut self.state);
+    }
+
+    fn mark_selected(&mut self, is_selected: bool) {
+        self.selected = is_selected;
     }
 }

@@ -32,6 +32,22 @@ pub struct Task {
     pub sub_tasks: Vec<SubTask>
 }
 
+impl Task {
+    fn is_all_sub_tasks_completed(&self) -> bool {
+        if self.sub_tasks.is_empty() {
+            return true;
+        } else {
+            for sub_task in &self.sub_tasks {
+                if sub_task.state != ETaskState::Completed {
+                    return false;
+                }
+            }
+        }
+
+        true
+    }
+}
+
 impl EventsListener for SubTask {
     type WorkerResponse = DatabaseResponse;
     fn handle_response(&mut self, response: &Self::WorkerResponse) -> Result<Request, String> {
@@ -42,6 +58,7 @@ impl EventsListener for SubTask {
                         Some(subtask_id) => {
                             if self.id == *subtask_id {
                                 self.state = state.clone();
+                                return self.mark_selected();
                             }
                         },
                         None => {},
@@ -91,6 +108,7 @@ impl EventsListener for Task {
                         Some(task_id) => {
                             if self.id == *task_id {
                                 self.state = state.clone();
+                                return self.mark_selected();
                             }
                         },
                         None => {},
@@ -164,7 +182,6 @@ impl ListViewItem for SubTask {
     }
 
     fn render(&self) -> ListItem<'_> {
-        info!("Render subtask {self}");
         ListItem::from(self)
     }
 
@@ -219,7 +236,7 @@ impl ListViewItem for Task {
             KeyCode::Char('n') => {
                 match ETaskState::try_from(self.state.clone() as i64 + 1) {
                     Ok(new_state) => {
-                        if self.sub_tasks.is_empty() {
+                        if new_state != ETaskState::Completed {
                             return Ok(Request::Database(DatabaseRequest::UpdateState(Target::Task, new_state, self.id)));
                         }
                     },
@@ -230,9 +247,7 @@ impl ListViewItem for Task {
             KeyCode::Char('p') => {
                 match ETaskState::try_from(self.state.clone() as i64 - 1) {
                     Ok(new_state) => {
-                        if self.sub_tasks.is_empty() {
-                            return Ok(Request::Database(DatabaseRequest::UpdateState(Target::Task, new_state, self.id)));
-                        }
+                        return Ok(Request::Database(DatabaseRequest::UpdateState(Target::Task, new_state, self.id)));
                     },
                     Err(_) => {},
                 }

@@ -54,7 +54,7 @@ impl Section for ContentSection {
         Some(ESectionId::Content(self.sub_section))
     }
 
-    fn handle_response(&mut self, response: &Response) {
+    fn handle_response(&mut self, response: &Response) -> Result<Request, String> {
         match response {
             Response::Database(database_response) => {
                 match database_response {
@@ -79,13 +79,34 @@ impl Section for ContentSection {
                         match &self.active_target {
                             Some(_) => {
                                 for project in self.projects.iter_mut() {
-                                    project.handle_response(database_response);
+                                    match project.handle_response(database_response) {
+                                        Ok(request) => {
+                                            if request != Request::Nothing {
+                                                return Ok(request);
+                                            }
+                                        },
+                                        Err(_) => {},
+                                    }
                                 }
                                 for task in self.tasks.iter_mut() {
-                                    task.handle_response(database_response);
+                                    match task.handle_response(database_response) {
+                                        Ok(request) => {
+                                            if request != Request::Nothing {
+                                                return Ok(request);
+                                            }
+                                        },
+                                        Err(_) => {},
+                                    }
                                 }
                                 for subtask in self.subtasks.iter_mut() {
-                                    subtask.handle_response(database_response);
+                                    match subtask.handle_response(database_response) {
+                                        Ok(request) => {
+                                            if request != Request::Nothing {
+                                                return Ok(request);
+                                            }
+                                        },
+                                        Err(_) => {},
+                                    }
                                 }
                             },
                             None => {
@@ -104,6 +125,8 @@ impl Section for ContentSection {
             _ => {
             },
         }
+
+        Ok(Request::Nothing)
     }
 
     fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<Request, String> {
@@ -112,6 +135,10 @@ impl Section for ContentSection {
                 self.view.handle_key(key)
             },
         }
+    }
+
+    fn mark_selected(&mut self, is_selected: bool) {
+        self.view.mark_selected(is_selected);
     }
 
     fn render(&mut self, area: Rect, buf: &mut Buffer) {
