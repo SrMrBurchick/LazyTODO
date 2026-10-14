@@ -35,3 +35,6 @@ SQL_VIEW_GET_NON_PROJECT_TASKS = "v_GetNonProjectTasks"
 SQL_VIEW_GET_PROJECT_TASKS = "v_GetProjectTasks"
 SQL_VIEW_GET_SUB_TASKS = "v_GetSubTasks"
 SQL_VIEW_GET_PROJECTS = "v_GetProjects"
+
+[build]
+rustflags = ["-Awarnings"]

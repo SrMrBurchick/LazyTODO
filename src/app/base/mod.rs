@@ -11,9 +11,19 @@ pub enum Target {
     All
 }
 
-// BigDICK TargetInfo
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TargetInfo {
+    // Id / Title / Description
+    Project(Option<i64>, String, String),
+    // Id / Title / Description / ProjectId / ProjectTitle
+    Task(Option<i64>, String, String, Option<i64>, Option<String>),
+    // Id / Title / Description / ParentTaskId / ParentTaskTitle / ProjectId / ProjectTitle
+    SubTask(Option<i64>, String, String, i64, String, Option<i64>, Option<String>),
+}
+
+// BigDICK TargetInfo
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum TargetStatusInfo {
     // Total / Completed
     Projects(i64, i64),
     // Id / Title / Description / Total / Completed / Progress
@@ -42,12 +52,12 @@ impl fmt::Display for Target {
     }
 }
 
-impl TryFrom<TargetInfo> for InspectorData {
+impl TryFrom<TargetStatusInfo> for InspectorData {
     type Error = String;
 
-    fn try_from(value: TargetInfo) -> Result<Self, Self::Error> {
+    fn try_from(value: TargetStatusInfo) -> Result<Self, Self::Error> {
         match value {
-            TargetInfo::Projects(total, completed) => {
+            TargetStatusInfo::Projects(total, completed) => {
                 Ok(InspectorData {
                     path: vec![],
                     item_name: "PROJECTS".to_string(),
@@ -69,7 +79,7 @@ impl TryFrom<TargetInfo> for InspectorData {
                     ..Default::default()
                 })
             },
-            TargetInfo::Project(id, name, description, total, completed, progress) => {
+            TargetStatusInfo::Project(id, name, description, total, completed, progress) => {
                 Ok(InspectorData {
                     path: vec!["Projects".to_string()],
                     item_name: name,
@@ -95,7 +105,7 @@ impl TryFrom<TargetInfo> for InspectorData {
                     identity: Some((Target::Project, id))
                 })
             },
-            TargetInfo::Task(id, name, description, status, project_id, project_name, total, completed, progress) => {
+            TargetStatusInfo::Task(id, name, description, status, project_id, project_name, total, completed, progress) => {
                 Ok(InspectorData {
                     path: match project_name {
                         Some(value) => {
@@ -128,7 +138,7 @@ impl TryFrom<TargetInfo> for InspectorData {
                     identity: Some((Target::Task, id))
                 })
             },
-            TargetInfo::SubTask(id, name, description, status, parent_task_id, parent_task_name, project_id, project_name) => {
+            TargetStatusInfo::SubTask(id, name, description, status, parent_task_id, parent_task_name, project_id, project_name) => {
                 Ok(InspectorData {
                     path: match project_name {
                         Some(value) => {

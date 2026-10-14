@@ -52,48 +52,7 @@ impl InspectorView {
         self.data = Some(data);
     }
 
-    // pub fn select_none(&mut self) {
-    //     self.state.select(None);
-    // }
-    //
-    // pub fn select_next(&mut self) {
-    //     self.state.select_next();
-    // }
-    //
-    // pub fn select_previous(&mut self) {
-    //     self.state.select_previous();
-    // }
-    //
-    // pub const fn select_first(&mut self) {
-    //     self.state.select_first();
-    // }
-    //
-    // pub const fn select_last(&mut self) {
-    //     self.state.select_last();
-    // }
-    //
-    // pub const fn selected(&self) -> Option<usize> {
-    //     self.state.selected()
-    // }
-    //
-    // pub fn select(&mut self, id: Option<usize>) {
-    //     match self.state.select(id) {
-    //         _ => {},
-    //     };
-    // }
-
     fn handle_navigation(&mut self, key: crossterm::event::KeyEvent)  -> Result<crate::app::events::Request, String> {
-        // match key.code {
-        //     KeyCode::Char('h') => self.select_none(),
-        //     KeyCode::Char('j') | KeyCode::Down => self.select_next(),
-        //     KeyCode::Char('k') | KeyCode::Up => self.select_previous(),
-        //     KeyCode::Char('g') | KeyCode::Home => self.select_first(),
-        //     KeyCode::Char('G') | KeyCode::End => self.select_last(),
-        //     _ => {
-        //     }
-        // }
-
-
         Ok(Request::Nothing)
     }
 }
@@ -101,28 +60,6 @@ impl InspectorView {
 impl View for InspectorView {
     type ViewData = InspectorData;
     fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
-        // match self.handle_navigation(key) {
-        //
-        //     Ok(request) => {
-        //         if request != Request::Nothing {
-        //             return Ok(request);
-        //         }
-        //     },
-        //     Err(_) => {},
-        // }
-        //
-        // match self.state.selected() {
-        //     Some(id) => {
-        //         match self.data.get_mut(id) {
-        //             Some(item) => {
-        //                 return item.handle_key(key);
-        //             },
-        //             None => {},
-        //         }
-        //     },
-        //     None => {},
-        // }
-
         Ok(Request::Nothing)
     }
 

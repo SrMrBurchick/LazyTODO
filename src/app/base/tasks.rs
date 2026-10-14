@@ -1,4 +1,4 @@
-use std::fmt::{self, Display};
+use std::{fmt::{self, Display}, sync::mpsc::RecvTimeoutError};
 
 use crossterm::event::KeyCode;
 use ratatui::widgets::ListItem;
@@ -30,22 +30,6 @@ pub struct Task {
     pub description: String,
     pub state: ETaskState,
     pub sub_tasks: Vec<SubTask>
-}
-
-impl Task {
-    fn is_all_sub_tasks_completed(&self) -> bool {
-        if self.sub_tasks.is_empty() {
-            return true;
-        } else {
-            for sub_task in &self.sub_tasks {
-                if sub_task.state != ETaskState::Completed {
-                    return false;
-                }
-            }
-        }
-
-        true
-    }
 }
 
 impl EventsListener for SubTask {

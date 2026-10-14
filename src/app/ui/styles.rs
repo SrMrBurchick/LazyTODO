@@ -67,6 +67,40 @@ pub const METRIC_HIGHLIGHT_COLOR: Color =
 pub const PROGRESS_TRACK_BG: Color =
     Color::Rgb(23, 33, 40);
 
+// Property / input
+pub const PROPERTY_BG: Color =
+    Color::Rgb(14, 19, 23);
+
+pub const PROPERTY_BORDER_COLOR: Color =
+    Color::Rgb(30, 42, 49);
+
+pub const PROPERTY_SELECTED_BORDER_COLOR: Color =
+    Color::Rgb(72, 102, 118);
+
+pub const PROPERTY_EDITING_BORDER_COLOR: Color =
+    Color::Rgb(201, 179, 122);
+
+pub const PROPERTY_LABEL_COLOR: Color =
+    Color::Rgb(104, 126, 137);
+
+pub const PROPERTY_VALUE_COLOR: Color =
+    Color::Rgb(196, 207, 214);
+
+pub const PROPERTY_READ_ONLY_COLOR: Color =
+    Color::Rgb(88, 103, 112);
+
+// Popup
+pub const POPUP_BG: Color =
+    Color::Rgb(12, 16, 20);
+
+pub const POPUP_BORDER_COLOR: Color =
+    Color::Rgb(54, 74, 86);
+
+pub const POPUP_TITLE_COLOR: Color =
+    Color::Rgb(145, 174, 190);
+
+pub const POPUP_TEXT_COLOR: Color =
+    Color::Rgb(196, 207, 214);
 
 impl<'a> From<&'a Project> for ListItem<'a> {
     fn from(value: &'a Project) -> Self {

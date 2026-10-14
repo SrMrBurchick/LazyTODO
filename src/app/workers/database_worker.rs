@@ -1,4 +1,6 @@
-use crate::{app::{base::{Target, projects::Project, tasks::Task}, events::{DatabaseRequest, DatabaseResponse, Request, Response}, workers::base::worker::Worker}, core::database_manager::Database};
+use tracing::warn;
+
+use crate::{app::{base::{Target, TargetInfo, projects::Project, tasks::Task}, events::{DatabaseRequest, DatabaseResponse, Request, Response}, workers::base::worker::Worker}, core::database_manager::Database};
 
 pub struct DatabaseWorker {
     database: Database
@@ -94,6 +96,33 @@ impl Worker for DatabaseWorker {
                 Ok(Response::Nothing)
             }
             DatabaseRequest::Add(target) => {
+                match target {
+                    TargetInfo::Project(_, name, description) => {
+                        if name.is_empty() || description.is_empty() {
+                            warn!("Invalid params to create new project");
+                            return Ok(Response::Nothing);
+                        }
+
+                        self.database.create_new_project(&name, &description);
+                    },
+                    TargetInfo::Task(_, name, description, project_id, _) => {
+                        if name.is_empty() || description.is_empty() {
+                            warn!("Invalid params to create new task");
+                            return Ok(Response::Nothing);
+                        }
+
+                        self.database.create_new_task(&name, &description, project_id);
+                    },
+                    TargetInfo::SubTask(_, name, description, parent_id, _, _, _) => {
+                        if name.is_empty() || description.is_empty() {
+                            warn!("Invalid params to create new sub task");
+                            return Ok(Response::Nothing);
+                        }
+
+                        self.database.create_new_sub_task(&name, &description, parent_id);
+                    }
+                    _ => {},
+                }
                 Ok(Response::Nothing)
             },
             DatabaseRequest::GetInfo(target, id) => {

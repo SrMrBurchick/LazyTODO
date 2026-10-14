@@ -7,7 +7,7 @@ use ratatui::widgets::{
     Block, Borders, HighlightSpacing, List, ListItem, ListState, Padding, Paragraph,
     StatefulWidget, Widget, Wrap,
 };
-use ratatui::symbols;
+use ratatui::{Frame, symbols};
 use tracing::info;
 
 use crate::app::base::Target;
@@ -61,19 +61,37 @@ impl Section for ContentSection {
                     DatabaseResponse::Tasks(tasks) => {
                         self.active_target = Some(Target::Task);
                         self.tasks = tasks.clone();
+                        match self.tasks.first() {
+                            Some(task) => {
+                                self.sub_section = Some(ESubsectionId::Tasks(task.project_id));
+                            },
+                            None => {
+                                self.sub_section = None;
+                            },
+                        }
                     },
                     DatabaseResponse::SubTasks(tasks) => {
                         self.active_target = Some(Target::SubTask);
                         self.subtasks = tasks.clone();
+                        match self.subtasks.first() {
+                            Some(task) => {
+                                self.sub_section = Some(ESubsectionId::SubTasks(Some(task.parent_task_id)));
+                            },
+                            None => {
+                                self.sub_section = None;
+                            },
+                        }
                     },
                     DatabaseResponse::Projects(projects) => {
                         self.active_target = Some(Target::Project);
                         self.projects = projects.clone();
+                        self.sub_section = Some(ESubsectionId::Projects);
                     },
                     DatabaseResponse::All(projects, tasks) => {
                         self.active_target = Some(Target::All);
                         self.projects = projects.clone();
                         self.tasks = tasks.clone();
+                        self.sub_section = None;
                     },
                     DatabaseResponse::Updated(target, _, _) => {
                         match &self.active_target {
@@ -115,10 +133,6 @@ impl Section for ContentSection {
 
                     },
                     _ => {
-                        // self.active_target = None;
-                        // self.projects.clear();
-                        // self.tasks.clear();
-                        // self.subtasks.clear();
                     },
                 }
             }
@@ -141,7 +155,7 @@ impl Section for ContentSection {
         self.view.mark_selected(is_selected);
     }
 
-    fn render(&mut self, area: Rect, buf: &mut Buffer) {
+    fn render(&mut self, area: Rect, frame: &mut Frame) {
         // content
         match &self.active_target {
             Some(target) => {
@@ -169,7 +183,7 @@ impl Section for ContentSection {
             },
         }
 
-        self.view.render(area, buf);
+        self.view.render(area, frame.buffer_mut());
     }
 
 }

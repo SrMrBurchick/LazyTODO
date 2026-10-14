@@ -9,25 +9,29 @@ use ratatui::widgets::{
     Block, Borders, HighlightSpacing, List, ListItem, ListState, Padding, Paragraph,
     StatefulWidget, Widget, Wrap,
 };
-use ratatui::{DefaultTerminal, symbols};
+use ratatui::{DefaultTerminal, Frame, symbols};
 use tokio::sync::mpsc;
 
 use crate::app::base::Target;
 use crate::app::base::projects::Project;
-use crate::app::events::{DatabaseRequest, Request, Response, DatabaseResponse};
+use crate::app::events::{DatabaseRequest, DatabaseResponse, PopupRequest, Request, Response};
 use crate::app::ui::components::base::component::Component;
 use crate::app::ui::components::navigation::NavigationComponent;
+use crate::app::ui::components::popup_component::PopupComponent;
 use crate::app::ui::sections::ESectionId;
 use crate::app::ui::sections::base::section::Section;
 use crate::app::ui::sections::content_section::ContentSection;
 use crate::app::ui::sections::inspector_section::InspectorSection;
 use crate::app::ui::sections::spaces_section::SpacesSection;
+use crate::app::ui::views::base::view::View;
+use crate::app::ui::views::popup_view::{PopupData, PopupView};
 use crossterm::event::{Event, EventStream};
 use futures::StreamExt;
 
 pub struct AppWidget {
     sections: Vec<Box<dyn Section>>,
     navigation_component: NavigationComponent,
+    popup_component: PopupComponent,
     sender: mpsc::Sender<Request>,
     receiver: mpsc::Receiver<Response>,
     should_exit: bool
@@ -44,7 +48,8 @@ impl AppWidget {
             sender: tx,
             receiver: rx,
             should_exit: false,
-            navigation_component: NavigationComponent::new()
+            navigation_component: NavigationComponent::new(),
+            popup_component: PopupComponent::new()
         }
     }
 
@@ -60,7 +65,10 @@ impl AppWidget {
         let mut input = EventStream::new();
 
         while !self.should_exit {
-            match terminal.draw(|frame| frame.render_widget(&mut self, frame.area())) {
+            match terminal.draw(|frame| {
+                let area= frame.area();
+                self.render_frame(area, frame);
+            }) {
                 Ok(_) => {},
                 Err(_) => {
                     return;
@@ -85,20 +93,27 @@ impl AppWidget {
     }
 
     async fn handle_response(&mut self, response: Response) {
-        for section in self.sections.iter_mut() {
-            match section.handle_response(&response) {
-                Ok(request) => {
-                    match request {
-                        Request::Nothing => {
-
-                        }
-                        _ => {
-                            self.sender.send(request).await;
-                        },
-                    }
-                },
-                Err(_) => {},
+        match response.clone() {
+            Response::Popup(popup_response) => {
+                self.popup_component.handle_response(response);
             }
+            _ => {
+                for section in self.sections.iter_mut() {
+                    match section.handle_response(&response) {
+                        Ok(request) => {
+                            match request {
+                                Request::Nothing => {
+
+                                },
+                                _ => {
+                                    self.sender.send(request).await;
+                                },
+                            }
+                        },
+                        Err(_) => {},
+                    }
+                }
+            },
         }
     }
 
@@ -127,6 +142,7 @@ impl AppWidget {
                                     let is_same_section = std::mem::discriminant(&section_id) == std::mem::discriminant(&active_id);
                                     if is_same_section {
                                         section.mark_selected(true);
+                                        self.navigation_component.set_active_section(Some(section_id.clone()));
                                         match section.handle_key(key) {
                                             Ok(request) => {
                                                 self.sender.send(request).await;
@@ -163,7 +179,13 @@ impl AppWidget {
             .render(area, buf);
     }
 
-    pub fn render_content(&mut self, area: Rect, buf: &mut Buffer) {
+    fn render_popup(&mut self, area: Rect, frame: &mut Frame) {
+        if self.popup_component.is_ready_to_show() {
+            self.popup_component.render_frame(frame, area);
+        }
+    }
+
+    fn render_frame(&mut self, area: Rect, frame: &mut Frame) {
         let layout = Layout::horizontal([
             Constraint::Percentage(20),
             Constraint::Percentage(50),
@@ -171,15 +193,10 @@ impl AppWidget {
         ]);
 
         let areas = layout.split(area);
-
         for (section, area) in self.sections.iter_mut().zip(areas.iter()) {
-            section.render(*area, buf);
+            section.render(*area, frame);
         }
-    }
-}
 
-impl Widget for &mut AppWidget {
-    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
-        self.render_content(area, buf);
+        self.render_popup(area, frame);
     }
 }

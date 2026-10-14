@@ -1,3 +1,4 @@
+use ratatui::Frame;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use crate::app::events::{DatabaseResponse, Request};
@@ -61,7 +62,7 @@ impl Section for InspectorSection {
         self.view.handle_key(key)
     }
 
-    fn render(&mut self, area: Rect, buf: &mut Buffer) {
-        self.view.render(area, buf);
+    fn render(&mut self, area: Rect, frame: &mut Frame) {
+        self.view.render(area, frame.buffer_mut());
     }
 }

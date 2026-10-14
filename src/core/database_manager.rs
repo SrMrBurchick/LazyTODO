@@ -6,7 +6,7 @@ use std::{
 };
 use tracing::{info, error, warn};
 
-use crate::app::base::{TargetInfo, projects::Project, tasks::{ETaskState, SubTask, Task}};
+use crate::app::base::{TargetStatusInfo, projects::Project, tasks::{ETaskState, SubTask, Task}};
 
 #[derive(Default)]
 pub struct Database {
@@ -251,7 +251,7 @@ impl Database {
         Ok(new_project)
     }
 
-    fn parse_projects_info(&self, statement: &mut Statement) -> Option<TargetInfo> {
+    fn parse_projects_info(&self, statement: &mut Statement) -> Option<TargetStatusInfo> {
         let total: i64;
         let completed: i64;
         match statement.read("total") {
@@ -274,10 +274,10 @@ impl Database {
             },
         }
 
-        Some(TargetInfo::Projects(total, completed))
+        Some(TargetStatusInfo::Projects(total, completed))
     }
 
-    fn parse_project_info(&self, statement: &mut Statement) -> Option<TargetInfo> {
+    fn parse_project_info(&self, statement: &mut Statement) -> Option<TargetStatusInfo> {
         let id: i64;
         let title: String;
         let description: String;
@@ -329,10 +329,10 @@ impl Database {
         }
 
 
-        Some(TargetInfo::Project(id, title, description, total, completed, progress))
+        Some(TargetStatusInfo::Project(id, title, description, total, completed, progress))
     }
 
-    fn parse_task_info(&self, statement: &mut Statement) -> Option<TargetInfo> {
+    fn parse_task_info(&self, statement: &mut Statement) -> Option<TargetStatusInfo> {
         let id: i64;
         let title: String;
         let description: String;
@@ -407,10 +407,10 @@ impl Database {
         }
 
 
-        Some(TargetInfo::Task(id, title, description, task_state, projectId, projectTitle, total, completed, progress))
+        Some(TargetStatusInfo::Task(id, title, description, task_state, projectId, projectTitle, total, completed, progress))
     }
 
-    fn parse_sub_task_info(&self, statement: &mut Statement) -> Option<TargetInfo> {
+    fn parse_sub_task_info(&self, statement: &mut Statement) -> Option<TargetStatusInfo> {
         let id: i64;
         let title: String;
         let description: String;
@@ -465,7 +465,7 @@ impl Database {
 
         projectTitle = statement.read("projectTitle").unwrap();
 
-        Some(TargetInfo::SubTask(id, title, description, task_state, parentTaskId, parentTaskTitle, projectId, projectTitle))
+        Some(TargetStatusInfo::SubTask(id, title, description, task_state, parentTaskId, parentTaskTitle, projectId, projectTitle))
     }
 
 
@@ -875,7 +875,7 @@ impl Database {
         }
     }
 
-    pub fn get_projects_info(&self) -> Option<TargetInfo> {
+    pub fn get_projects_info(&self) -> Option<TargetStatusInfo> {
         match &self.connection {
             Some(connection) => {
                 match connection.prepare(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), env!("SQL_VIEW_GET_PROJECTS_INFO")))) {
@@ -897,7 +897,7 @@ impl Database {
         None
     }
 
-    pub fn get_project_info(&self, id: i64) -> Option<TargetInfo> {
+    pub fn get_project_info(&self, id: i64) -> Option<TargetStatusInfo> {
         match &self.connection {
             Some(connection) => {
                 match connection.prepare(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), env!("SQL_VIEW_GET_PROJECT_INFO")))) {
@@ -920,7 +920,7 @@ impl Database {
         None
     }
 
-    pub fn get_task_info(&self, id: i64) -> Option<TargetInfo> {
+    pub fn get_task_info(&self, id: i64) -> Option<TargetStatusInfo> {
         match &self.connection {
             Some(connection) => {
                 match connection.prepare(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), env!("SQL_VIEW_GET_TASK_INFO")))) {
@@ -942,7 +942,7 @@ impl Database {
         None
     }
 
-    pub fn get_sub_task_info(&self, id: i64) -> Option<TargetInfo> {
+    pub fn get_sub_task_info(&self, id: i64) -> Option<TargetStatusInfo> {
         match &self.connection {
             Some(connection) => {
                 match connection.prepare(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), env!("SQL_VIEW_GET_SUB_TASK_INFO")))) {

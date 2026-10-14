@@ -7,7 +7,7 @@ use ratatui::widgets::{
     Block, Borders, HighlightSpacing, List, ListItem, ListState, Padding, Paragraph,
     StatefulWidget, Widget, Wrap,
 };
-use ratatui::symbols;
+use ratatui::{Frame, symbols};
 
 use crate::app::base::Target;
 use crate::app::events::{DatabaseRequest, Request};
@@ -155,9 +155,9 @@ impl Section for SpacesSection {
         self.view.handle_key(key)
     }
 
-    fn render(&mut self, area: Rect, buf: &mut Buffer) {
+    fn render(&mut self, area: Rect, frame: &mut Frame) {
         // content
-        self.view.render(area, buf);
+        self.view.render(area, frame.buffer_mut());
     }
 
     fn mark_selected(&mut self, is_selected: bool) {
