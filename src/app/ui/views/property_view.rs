@@ -1,6 +1,6 @@
 use ratatui::Frame;
 use ratatui::buffer::Buffer;
-use ratatui::layout::Rect;
+use ratatui::layout::{Position, Rect};
 use ratatui::style::{Modifier, Style};
 use ratatui::{
     layout::{Constraint, Layout},
@@ -10,7 +10,7 @@ use ratatui::{
 
 use crate::app::events::Request;
 use crate::app::ui::styles;
-use crate::app::ui::views::base::view::View;
+use crate::app::ui::views::base::view::{View, ViewState};
 use crate::app::ui::components::base::component::Component;
 use crate::app::ui::components::user_input::{ UserInputComponent, EInputMode};
 
@@ -23,7 +23,7 @@ pub struct PropertyData {
 
 #[derive(Debug, Clone, Default)]
 pub struct PropertyView {
-    data: PropertyData,
+    pub data: PropertyData,
     user_input: Option<UserInputComponent>,
     selected: bool
 }
@@ -36,26 +36,31 @@ impl PropertyView {
             selected: false
         }
     }
+
+    pub fn get_mode(&self) -> Option<EInputMode> {
+        match &self.user_input {
+            Some(input) => {
+                return Some(input.get_mode())
+            },
+            None => {
+            },
+        }
+
+        None
+    }
 }
 
 impl View for PropertyView {
     type ViewData = PropertyData;
-    fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
-        match &mut self.user_input {
-            Some(component) => {
-                if self.selected {
-                    component.handle_key(key)
-                } else {
-                    Ok(Request::Nothing)
-                }
-            },
-            None => {
-                Ok(Request::Nothing)
-            },
-        }
-    }
 
     fn render_data(&mut self, area: Rect, buf: &mut Buffer, data: &Self::ViewData) {
+    }
+
+    fn render(&mut self, area: Rect, buf: &mut Buffer) {
+    }
+
+
+    fn render_frame(&mut self, frame: &mut Frame, area: Rect) {
         let [label_area, value_area] = Layout::vertical([
             Constraint::Length(1),
             Constraint::Min(3),
@@ -63,12 +68,12 @@ impl View for PropertyView {
             .areas(area);
 
         Paragraph::new(Line::styled(
-            format!("  {}", data.label.to_uppercase()),
+            format!("  {}", self.data.label.to_uppercase()),
             Style::default()
                 .fg(styles::PROPERTY_LABEL_COLOR)
                 .add_modifier(Modifier::BOLD),
         ))
-            .render(label_area, buf);
+            .render(label_area, frame.buffer_mut());
 
         let editing = self.selected
         && self
@@ -84,19 +89,19 @@ impl View for PropertyView {
             styles::PROPERTY_BORDER_COLOR
         };
 
-        let title = if data.read_only {
+        let title = if self.data.read_only {
             " READ ONLY "
         } else if editing {
             " EDITING "
         } else if self.selected {
-            " SELECTED "
+            ""
         } else {
             ""
         };
 
         let title_color = if editing {
             styles::PROPERTY_EDITING_BORDER_COLOR
-        } else if data.read_only {
+        } else if self.data.read_only {
             styles::PROPERTY_READ_ONLY_COLOR
         } else {
             border_color
@@ -114,10 +119,10 @@ impl View for PropertyView {
 
         let value = match &self.user_input {
             Some(input) if editing => input.get_data(),
-            _ => data.value.clone(),
+            _ => self.data.value.clone(),
         };
 
-        let value_color = if data.read_only {
+        let value_color = if self.data.read_only {
             styles::PROPERTY_READ_ONLY_COLOR
         } else {
             styles::PROPERTY_VALUE_COLOR
@@ -128,19 +133,36 @@ impl View for PropertyView {
             Style::default().fg(value_color),
         ))
             .block(input_block)
-            .render(value_area, buf);
+            .render(value_area, frame.buffer_mut());
+
+        match self.get_mode() {
+            Some(mode) => {
+                match mode {
+                    EInputMode::Normal => {}
+
+                    EInputMode::Editing => {
+                        match &self.user_input {
+                            Some(input) => {
+                                frame.set_cursor_position(Position::new(
+                                    value_area.x + input.get_cursor_position() as u16 + 1,
+                                    value_area.y + 1,
+                                ))
+
+                            },
+                            None => {},
+                        }
+                    } ,
+
+                    _ => {},
+                }
+            },
+            None => {},
+        }
+
     }
+}
 
-    fn render(&mut self, area: Rect, buf: &mut Buffer) {
-        let data = self.data.clone();
-        self.render_data(area, buf, &data);
-    }
-
-
-    fn render_frame(&mut self, frame: &mut Frame, area: Rect) {
-        self.render(area, frame.buffer_mut());
-    }
-
+impl ViewState for PropertyView {
     fn mark_selected(&mut self, is_selected: bool) {
         if !self.data.read_only {
             match self.user_input {
@@ -152,6 +174,26 @@ impl View for PropertyView {
         }
 
         self.selected = is_selected;
-
     }
+
+	fn is_seleceted(&self) -> bool {
+		self.selected
+	}
+
+	fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
+		match &mut self.user_input {
+			Some(component) => {
+				if self.selected {
+					let response = component.handle_key(key);
+					self.data.value = component.get_data();
+					return response;
+				} else {
+					Ok(Request::Nothing)
+				}
+			},
+			None => {
+				Ok(Request::Nothing)
+			},
+		}
+	}
 }

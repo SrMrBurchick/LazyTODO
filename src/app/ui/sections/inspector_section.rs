@@ -3,7 +3,7 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use crate::app::events::{DatabaseResponse, Request};
 use crate::app::ui::sections::ESectionId;
-use crate::app::ui::views::base::view::View;
+use crate::app::ui::views::base::view::{View, ViewState};
 use crate::app::ui::views::inspector_view::{InspectorData, InspectorView};
 use crate::app::{events::Response, ui::{sections::base::section::Section}};
 

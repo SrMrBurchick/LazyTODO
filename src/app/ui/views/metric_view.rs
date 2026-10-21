@@ -9,7 +9,7 @@ use ratatui::{
 
 use crate::app::events::Request;
 use crate::app::ui::styles;
-use crate::app::ui::views::base::view::View;
+use crate::app::ui::views::base::view::{View, ViewState};
 
 #[derive(Clone, Default)]
 pub struct MetricData {
@@ -32,9 +32,6 @@ impl MetricView {
 
 impl View for MetricView {
     type ViewData = MetricData;
-    fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
-        Ok(Request::Nothing)
-    }
 
     fn render_data(&mut self, area: Rect, buf: &mut Buffer, data: &Self::ViewData) {
         let block = Block::new()
@@ -71,7 +68,13 @@ impl View for MetricView {
         let data = self.data.clone();
         self.render_data(area, buf, &data);
     }
+}
 
+impl ViewState for MetricView {
     fn mark_selected(&mut self, is_selected: bool) {
+    }
+
+	fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
+        Ok(Request::Nothing)
     }
 }

@@ -2,7 +2,7 @@ use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::app::{events::{DatabaseResponse, HistoryRequest, Request, Response}, ui::{components::base::component::Component, sections::ESectionId}};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum EInputMode {
     Normal,
     Editing,
@@ -28,6 +28,10 @@ impl UserInputComponent {
 
     pub fn get_mode(&self) -> EInputMode {
         self.mode.clone()
+    }
+
+    pub fn get_cursor_position(&self) -> usize {
+        self.cursor_position
     }
 
     fn confirm(&mut self) {
@@ -103,7 +107,7 @@ impl Component for UserInputComponent {
         match self.mode {
             EInputMode::Normal => {
                 match key.code {
-                    KeyCode::Char('i') => {
+                    KeyCode::Char('i') | KeyCode::Enter => {
                         self.mode = EInputMode::Editing;
                     },
                     _ => {

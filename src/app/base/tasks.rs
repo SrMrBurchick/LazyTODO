@@ -212,17 +212,17 @@ impl ListViewItem for Task {
     fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
         match key.code {
             KeyCode::Enter => {
-                if !self.sub_tasks.is_empty() {
-                    return Ok(Request::Database(DatabaseRequest::Get(Target::SubTask, Some(self.id))));
-                }
+                return Ok(Request::Database(DatabaseRequest::Get(Target::SubTask, Some(self.id))));
             }
             // KeyCode::Left => {
             KeyCode::Char('n') => {
                 match ETaskState::try_from(self.state.clone() as i64 + 1) {
                     Ok(new_state) => {
-                        if new_state != ETaskState::Completed {
-                            return Ok(Request::Database(DatabaseRequest::UpdateState(Target::Task, new_state, self.id)));
+                        if new_state == ETaskState::Completed && !self.sub_tasks.is_empty() {
+                            return Ok(Request::Nothing)
                         }
+
+                        return Ok(Request::Database(DatabaseRequest::UpdateState(Target::Task, new_state, self.id)));
                     },
                     Err(_) => {},
                 }

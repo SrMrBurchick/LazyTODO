@@ -12,7 +12,7 @@ use ratatui::{DefaultTerminal, symbols};
 
 use crate::app::events::{Request, Response};
 use crate::app::ui::styles;
-use crate::app::ui::views::base::view::{self, View};
+use crate::app::ui::views::base::view::{self, View, ViewState};
 
 
 pub trait ListViewItem {
@@ -132,31 +132,6 @@ impl ListView {
 
 impl View for ListView {
     type ViewData = Vec<Box<dyn ListViewItem>>;
-    fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
-        match self.handle_navigation(key) {
-
-            Ok(request) => {
-                if request != Request::Nothing {
-                    return Ok(request);
-                }
-            },
-            Err(_) => {},
-        }
-
-        match self.state.selected() {
-            Some(id) => {
-                match self.data.get_mut(id) {
-                    Some(item) => {
-                        return item.handle_key(key);
-                    },
-                    None => {},
-                }
-            },
-            None => {},
-        }
-
-        Ok(Request::Nothing)
-    }
 
     fn render_data(&mut self, area: Rect, buf: &mut Buffer, data: &Self::ViewData) {
         let block = Block::new()
@@ -222,8 +197,37 @@ impl View for ListView {
         // same method name `render`.
         StatefulWidget::render(list, area, buf, &mut self.state);
     }
+}
 
+impl ViewState for ListView {
     fn mark_selected(&mut self, is_selected: bool) {
         self.selected = is_selected;
     }
+
+    fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
+        match self.handle_navigation(key) {
+
+            Ok(request) => {
+                if request != Request::Nothing {
+                    return Ok(request);
+                }
+            },
+            Err(_) => {},
+        }
+
+        match self.state.selected() {
+            Some(id) => {
+                match self.data.get_mut(id) {
+                    Some(item) => {
+                        return item.handle_key(key);
+                    },
+                    None => {},
+                }
+            },
+            None => {},
+        }
+
+        Ok(Request::Nothing)
+    }
+
 }

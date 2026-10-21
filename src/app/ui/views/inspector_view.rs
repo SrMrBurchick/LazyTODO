@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{Block, Borders, Padding, Paragraph, Widget, Wrap},
 };
 
-use crate::app::base::Target;
+use crate::app::{base::Target, ui::views::base::view::ViewState};
 use crate::app::base::tasks::ETaskState;
 use crate::app::events::Request;
 use crate::app::ui::styles;
@@ -59,9 +59,6 @@ impl InspectorView {
 
 impl View for InspectorView {
     type ViewData = InspectorData;
-    fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
-        Ok(Request::Nothing)
-    }
 
     fn render_data(&mut self, area: Rect, buf: &mut Buffer, data: &Self::ViewData) {
         let block = Block::new()
@@ -249,8 +246,14 @@ impl View for InspectorView {
             },
         }
     }
+}
 
+impl ViewState for InspectorView{
     fn mark_selected(&mut self, is_selected: bool) {
         self.selected = is_selected;
+    }
+
+    fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
+        Ok(Request::Nothing)
     }
 }

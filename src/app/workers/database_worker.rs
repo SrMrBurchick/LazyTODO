@@ -32,7 +32,7 @@ impl Worker for DatabaseWorker {
                     Target::Task => {
                         match self.database.get_tasks(id) {
                             Ok(tasks) => {
-                                Ok(Response::Database(DatabaseResponse::Tasks(tasks)))
+                                Ok(Response::Database(DatabaseResponse::Tasks(id, tasks)))
                             },
                             Err(e) => {
                                 Err(e.to_string())
@@ -42,7 +42,7 @@ impl Worker for DatabaseWorker {
                     Target::SubTask => {
                         match self.database.get_sub_tasks_for_task(id.unwrap()) {
                             Ok(tasks) => {
-                                Ok(Response::Database(DatabaseResponse::SubTasks(tasks)))
+                                Ok(Response::Database(DatabaseResponse::SubTasks(id, tasks)))
                             },
                             Err(e) => {
                                 Err(e.to_string())

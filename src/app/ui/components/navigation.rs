@@ -85,8 +85,11 @@ impl Component for NavigationComponent {
                                                 return Ok(Request::Popup(PopupRequest::Create(TargetInfo::Project(None, String::default(), String::default()))));
                                             },
                                             ESubsectionId::Tasks(project_id) => {
-
-                                            }
+                                                return Ok(Request::Popup(PopupRequest::Create(TargetInfo::Task(None, String::default(), String::default(), project_id, None))));
+                                            },
+											ESubsectionId::SubTasks(parent_task) => {
+                                                return Ok(Request::Popup(PopupRequest::Create(TargetInfo::SubTask(None, String::default(), String::default(), parent_task.unwrap(), String::default(), None, None))));
+											}
                                             _ => {},
                                         }
                                     },

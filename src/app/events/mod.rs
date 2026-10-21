@@ -34,6 +34,12 @@ pub enum SelectionRequest {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ButtonRequest{
+    Confirm,
+    Cancel
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum PopupRequest{
     Update(TargetInfo),
     Create(TargetInfo),
@@ -48,6 +54,7 @@ pub enum Request {
     History(HistoryRequest),
     Selection(SelectionRequest),
     Popup(PopupRequest),
+	Button(Option<ButtonRequest>),
     Exit,
     Nothing,
 }
@@ -61,9 +68,9 @@ pub enum PopupResponse{
 #[derive(Clone, Debug)]
 pub enum DatabaseResponse {
     Projects(Vec<Project>),
-    Tasks(Vec<Task>),
+    Tasks(Option<i64>, Vec<Task>),
     Info(Option<i64>, TargetStatusInfo),
-    SubTasks(Vec<SubTask>),
+    SubTasks(Option<i64>, Vec<SubTask>),
     All(Vec<Project>, Vec<Task>),
     Updated(Target, ETaskState, Option<i64>),
 }
@@ -107,12 +114,12 @@ impl fmt::Display for DatabaseResponse {
                     writeln!(f, "{task}")?;
                 }
             },
-            DatabaseResponse::Tasks(tasks) => {
+            DatabaseResponse::Tasks(_, tasks) => {
                 for task in tasks {
                     writeln!(f, "{task}")?;
                 }
             },
-            DatabaseResponse::SubTasks(tasks) => {
+            DatabaseResponse::SubTasks(_, tasks) => {
                 for task in tasks {
                     writeln!(f, "{task}")?;
                 }

@@ -118,6 +118,16 @@ impl AppWidget {
     }
 
     async fn handle_key(&mut self, key: KeyEvent) {
+        if self.popup_component.is_active() {
+            match self.popup_component.handle_key(key) {
+				Ok(request) => {
+					self.sender.send(request).await;
+				}
+				_ => {}
+			}
+            return;
+        }
+
         match key.code {
             KeyCode::Char('q') => {
                 self.sender.send(Request::Exit).await;
@@ -180,7 +190,7 @@ impl AppWidget {
     }
 
     fn render_popup(&mut self, area: Rect, frame: &mut Frame) {
-        if self.popup_component.is_ready_to_show() {
+        if self.popup_component.is_active() {
             self.popup_component.render_frame(frame, area);
         }
     }

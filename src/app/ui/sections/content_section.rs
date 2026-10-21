@@ -16,7 +16,7 @@ use crate::app::base::tasks::{SubTask, Task, sub_tasks_to_widget_list, tasks_to_
 use crate::app::events::event_listener::EventsListener;
 use crate::app::events::{DatabaseResponse, Request};
 use crate::app::ui::sections::{ESectionId, ESubsectionId};
-use crate::app::ui::views::base::view::View;
+use crate::app::ui::views::base::view::{View, ViewState};
 use crate::app::ui::views::list_view::ListViewItem;
 use crate::app::{events::Response, ui::{sections::base::section::Section, styles, views::list_view::ListView}};
 
@@ -58,29 +58,15 @@ impl Section for ContentSection {
         match response {
             Response::Database(database_response) => {
                 match database_response {
-                    DatabaseResponse::Tasks(tasks) => {
+                    DatabaseResponse::Tasks(project_id, tasks) => {
                         self.active_target = Some(Target::Task);
                         self.tasks = tasks.clone();
-                        match self.tasks.first() {
-                            Some(task) => {
-                                self.sub_section = Some(ESubsectionId::Tasks(task.project_id));
-                            },
-                            None => {
-                                self.sub_section = None;
-                            },
-                        }
+                        self.sub_section = Some(ESubsectionId::Tasks(project_id.clone()));
                     },
-                    DatabaseResponse::SubTasks(tasks) => {
+                    DatabaseResponse::SubTasks(task_id, tasks) => {
                         self.active_target = Some(Target::SubTask);
                         self.subtasks = tasks.clone();
-                        match self.subtasks.first() {
-                            Some(task) => {
-                                self.sub_section = Some(ESubsectionId::SubTasks(Some(task.parent_task_id)));
-                            },
-                            None => {
-                                self.sub_section = None;
-                            },
-                        }
+                        self.sub_section = Some(ESubsectionId::SubTasks(task_id.clone()));
                     },
                     DatabaseResponse::Projects(projects) => {
                         self.active_target = Some(Target::Project);
