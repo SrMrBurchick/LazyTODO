@@ -7,10 +7,11 @@ use ratatui::{
     text::Line,
     widgets::{Block, Borders, Paragraph, Widget},
 };
+use tracing::info;
 
 use crate::app::events::Request;
 use crate::app::ui::styles;
-use crate::app::ui::views::base::view::{View, ViewState};
+use crate::app::ui::views::base::view::{View, ViewStateController};
 use crate::app::ui::components::base::component::Component;
 use crate::app::ui::components::user_input::{ UserInputComponent, EInputMode};
 
@@ -29,7 +30,7 @@ pub struct PropertyView {
 }
 
 impl PropertyView {
-    pub fn new(data: &PropertyData) -> Self {
+    pub fn new(data: PropertyData) -> Self {
         PropertyView {
             data: data.clone(),
             user_input: None,
@@ -58,7 +59,6 @@ impl View for PropertyView {
 
     fn render(&mut self, area: Rect, buf: &mut Buffer) {
     }
-
 
     fn render_frame(&mut self, frame: &mut Frame, area: Rect) {
         let [label_area, value_area] = Layout::vertical([
@@ -133,20 +133,34 @@ impl View for PropertyView {
             Style::default().fg(value_color),
         ))
             .block(input_block)
+			.wrap(ratatui::widgets::Wrap { trim: false })
             .render(value_area, frame.buffer_mut());
 
         match self.get_mode() {
             Some(mode) => {
                 match mode {
                     EInputMode::Normal => {}
-
                     EInputMode::Editing => {
                         match &self.user_input {
                             Some(input) => {
-                                frame.set_cursor_position(Position::new(
-                                    value_area.x + input.get_cursor_position() as u16 + 1,
-                                    value_area.y + 1,
-                                ))
+								let inner_width = value_area.width.saturating_sub(2) as usize;
+
+								if inner_width > 0 {
+									let cursor = input.get_cursor_position();
+									info!("Cursor position: {cursor}");
+
+									let cursor_x = cursor % inner_width;
+									let cursor_y = cursor / inner_width;
+
+									frame.set_cursor_position(Position::new(
+										value_area.x + cursor_x as u16 + 1,
+										value_area.y + cursor_y as u16 + 1,
+									));
+								}
+                                // frame.set_cursor_position(Position::new(
+                                //     value_area.x + input.get_cursor_position() as u16 + 1,
+                                //     value_area.y + 1,
+                                // ))
 
                             },
                             None => {},
@@ -162,13 +176,19 @@ impl View for PropertyView {
     }
 }
 
-impl ViewState for PropertyView {
+impl ViewStateController for PropertyView {
     fn mark_selected(&mut self, is_selected: bool) {
         if !self.data.read_only {
             match self.user_input {
                 Some(_) => {},
                 None => {
                     self.user_input = Some(UserInputComponent::new());
+					match &mut self.user_input {
+						Some(component) => {
+							component.set_data(self.data.value.clone());
+						}
+						_=> {}
+					}
                 },
             }
         }

@@ -10,7 +10,7 @@ use ratatui::{
 
 use crate::app::events::{ButtonRequest, Request};
 use crate::app::ui::styles;
-use crate::app::ui::views::base::view::{View, ViewState};
+use crate::app::ui::views::base::view::{View, ViewStateController};
 
 #[derive(Clone, Default)]
 pub struct ButtonData {
@@ -18,7 +18,7 @@ pub struct ButtonData {
 	pub click_action: Option<ButtonRequest>
 }
 
-type OnClickCallback = Box<dyn FnMut(&mut dyn ViewState)>;
+type OnClickCallback = Box<dyn FnMut(&mut dyn ViewStateController)>;
 
 pub struct ButtonView {
     data: ButtonData,
@@ -76,7 +76,7 @@ impl View for ButtonView {
     }
 }
 
-impl ViewState for ButtonView {
+impl ViewStateController for ButtonView {
     fn mark_selected(&mut self, is_selected: bool) {
         self.selected = is_selected;
     }

@@ -28,13 +28,16 @@ use crate::app::ui::views::popup_view::{PopupData, PopupView};
 use crossterm::event::{Event, EventStream};
 use futures::StreamExt;
 
+use super::components::user_input::EInputMode;
+
 pub struct AppWidget {
     sections: Vec<Box<dyn Section>>,
     navigation_component: NavigationComponent,
     popup_component: PopupComponent,
     sender: mpsc::Sender<Request>,
     receiver: mpsc::Receiver<Response>,
-    should_exit: bool
+    should_exit: bool,
+	input_mode: Option<EInputMode>
 }
 
 impl AppWidget {
@@ -49,7 +52,8 @@ impl AppWidget {
             receiver: rx,
             should_exit: false,
             navigation_component: NavigationComponent::new(),
-            popup_component: PopupComponent::new()
+            popup_component: PopupComponent::new(),
+			input_mode: None
         }
     }
 
@@ -117,6 +121,41 @@ impl AppWidget {
         }
     }
 
+	async fn handle_sections_input(&mut self, key: KeyEvent) {
+		match self.navigation_component.get_active_section() {
+			Some(active_id) => {
+				for section in self.sections.iter_mut() {
+					match section.get_id() {
+						Some(section_id) => {
+							let is_same_section = std::mem::discriminant(&section_id) == std::mem::discriminant(&active_id);
+							if is_same_section {
+								section.mark_selected(true);
+								self.navigation_component.set_active_section(Some(section_id.clone()));
+								match section.handle_key(key) {
+									Ok(request) => {
+										match request {
+											Request::Input(mode) => {
+												self.input_mode = mode;
+											}
+											_=> {
+												self.sender.send(request).await;
+											}
+										};
+									},
+									Err(_) => {},
+								};
+							} else {
+								section.mark_selected(false);
+							}
+						},
+						None => {},
+					}
+				}
+			},
+			None => {},
+		}
+	}
+
     async fn handle_key(&mut self, key: KeyEvent) {
         if self.popup_component.is_active() {
             match self.popup_component.handle_key(key) {
@@ -128,50 +167,28 @@ impl AppWidget {
             return;
         }
 
-        match key.code {
-            KeyCode::Char('q') => {
-                self.sender.send(Request::Exit).await;
-                self.should_exit = true
-            },
-            _ => {
-                match self.navigation_component.handle_key(key) {
-                    Ok(request) => {
-                        if (request != Request::Nothing) {
-                            self.sender.send(request).await;
-                            return;
-                        }
-                    },
-                    Err(_) => {},
-                }
+		if self.input_mode.is_none() || self.input_mode == Some(EInputMode::Normal) {
+			match key.code {
+				KeyCode::Char('q') => {
+					self.sender.send(Request::Exit).await;
+					self.should_exit = true;
+					return;
+				},
+				_ => {
+					match self.navigation_component.handle_key(key) {
+						Ok(request) => {
+							if request != Request::Nothing {
+								self.sender.send(request).await;
+								return;
+							}
+						},
+						Err(_) => {},
+					}
+				}
+			}
+		}
 
-                match self.navigation_component.get_active_section() {
-                    Some(active_id) => {
-                        for section in self.sections.iter_mut() {
-                            match section.get_id() {
-                                Some(section_id) => {
-                                    let is_same_section = std::mem::discriminant(&section_id) == std::mem::discriminant(&active_id);
-                                    if is_same_section {
-                                        section.mark_selected(true);
-                                        self.navigation_component.set_active_section(Some(section_id.clone()));
-                                        match section.handle_key(key) {
-                                            Ok(request) => {
-                                                self.sender.send(request).await;
-                                            },
-                                            Err(_) => {},
-                                        };
-                                    } else {
-                                        section.mark_selected(false);
-                                    }
-                                },
-                                None => {},
-                            }
-                        }
-                    },
-                    None => {},
-                }
-
-            }
-        }
+		self.handle_sections_input(key).await;
     }
 
     fn render_header(area: Rect, buf: &mut Buffer) {
@@ -182,11 +199,11 @@ impl AppWidget {
     }
 
     fn render_footer(area: Rect, buf: &mut Buffer) {
-            let title = env!("CARGO_PKG_NAME");
-            let version = env!("CARGO_PKG_VERSION");
-            Paragraph::new(format!("{title} {version}"))
-            .centered()
-            .render(area, buf);
+		let title = env!("CARGO_PKG_NAME");
+		let version = env!("CARGO_PKG_VERSION");
+		Paragraph::new(format!("{title} {version}"))
+		.centered()
+		.render(area, buf);
     }
 
     fn render_popup(&mut self, area: Rect, frame: &mut Frame) {

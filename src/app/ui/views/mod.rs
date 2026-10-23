@@ -6,4 +6,3 @@ pub mod metric_bar_view;
 pub mod popup_view;
 pub mod property_view;
 pub mod button_view;
-pub mod states;

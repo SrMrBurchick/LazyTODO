@@ -16,7 +16,7 @@ use crate::app::base::tasks::{SubTask, Task, sub_tasks_to_widget_list, tasks_to_
 use crate::app::events::event_listener::EventsListener;
 use crate::app::events::{DatabaseResponse, Request};
 use crate::app::ui::sections::{ESectionId, ESubsectionId};
-use crate::app::ui::views::base::view::{View, ViewState};
+use crate::app::ui::views::base::view::{View, ViewStateController};
 use crate::app::ui::views::list_view::ListViewItem;
 use crate::app::{events::Response, ui::{sections::base::section::Section, styles, views::list_view::ListView}};
 

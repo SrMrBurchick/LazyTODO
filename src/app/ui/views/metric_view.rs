@@ -9,7 +9,7 @@ use ratatui::{
 
 use crate::app::events::Request;
 use crate::app::ui::styles;
-use crate::app::ui::views::base::view::{View, ViewState};
+use crate::app::ui::views::base::view::{View, ViewStateController};
 
 #[derive(Clone, Default)]
 pub struct MetricData {
@@ -70,7 +70,7 @@ impl View for MetricView {
     }
 }
 
-impl ViewState for MetricView {
+impl ViewStateController for MetricView {
     fn mark_selected(&mut self, is_selected: bool) {
     }
 

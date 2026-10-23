@@ -4,6 +4,8 @@ use crate::app::{base::{
     Target, TargetInfo, TargetStatusInfo, projects::Project, tasks::{ETaskState, SubTask, Task},
 }, ui::views::popup_view::PopupData};
 
+use super::ui::components::user_input::EInputMode;
+
 pub mod event_listener;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -55,6 +57,7 @@ pub enum Request {
     Selection(SelectionRequest),
     Popup(PopupRequest),
 	Button(Option<ButtonRequest>),
+	Input(Option<EInputMode>),
     Exit,
     Nothing,
 }

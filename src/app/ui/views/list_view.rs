@@ -12,7 +12,7 @@ use ratatui::{DefaultTerminal, symbols};
 
 use crate::app::events::{Request, Response};
 use crate::app::ui::styles;
-use crate::app::ui::views::base::view::{self, View, ViewState};
+use crate::app::ui::views::base::view::{self, View, ViewStateController};
 
 
 pub trait ListViewItem {
@@ -199,7 +199,7 @@ impl View for ListView {
     }
 }
 
-impl ViewState for ListView {
+impl ViewStateController for ListView {
     fn mark_selected(&mut self, is_selected: bool) {
         self.selected = is_selected;
     }

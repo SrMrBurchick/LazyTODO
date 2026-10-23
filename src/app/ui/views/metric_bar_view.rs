@@ -16,7 +16,7 @@ use ratatui::{
 
 use crate::app::events::Request;
 use crate::app::ui::styles;
-use crate::app::ui::views::base::view::{View, ViewState};
+use crate::app::ui::views::base::view::{View, ViewStateController};
 
 #[derive(Clone)]
 pub struct MetricBarData {
@@ -131,7 +131,7 @@ impl View for MetricBarView {
     }
 }
 
-impl ViewState for MetricBarView {
+impl ViewStateController for MetricBarView {
     fn mark_selected(&mut self, is_selected: bool) {
     }
 

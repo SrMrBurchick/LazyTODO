@@ -1,5 +1,5 @@
 use crossterm::event::KeyEvent;
-use ratatui::{Frame, buffer::Buffer, layout::Rect};
+use ratatui::{buffer::Buffer, layout::Rect, widgets::Widget, Frame};
 
 pub trait View {
     type ViewData;
@@ -10,7 +10,7 @@ pub trait View {
     }
 }
 
-pub trait ViewState {
+pub trait ViewStateController {
     fn mark_selected(&mut self, is_selected: bool);
     fn handle_key(&mut self, key: KeyEvent) -> Result<crate::app::events::Request, String> ;
 	fn is_seleceted(&self) -> bool { false }

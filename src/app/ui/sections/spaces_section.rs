@@ -12,7 +12,7 @@ use ratatui::{Frame, symbols};
 use crate::app::base::Target;
 use crate::app::events::{DatabaseRequest, Request};
 use crate::app::ui::sections::ESectionId;
-use crate::app::ui::views::base::view::{View, ViewState};
+use crate::app::ui::views::base::view::{View, ViewStateController};
 use crate::app::ui::views::list_view::ListViewItem;
 use crate::app::{events::Response, ui::{sections::base::section::Section, styles, views::list_view::ListView}};
 

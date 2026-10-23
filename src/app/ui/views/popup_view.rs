@@ -17,74 +17,11 @@ use crate::app::base::TargetInfo;
 use crate::app::events::{ButtonRequest, Request};
 use crate::app::ui::components::user_input::EInputMode;
 use crate::app::ui::styles;
-use crate::app::ui::views::base::view::{View, ViewState};
+use crate::app::ui::views::base::view::{View, ViewStateController};
 use crate::app::ui::views::button_view::{ButtonData, ButtonView};
 use crate::app::ui::views::property_view::{PropertyData, PropertyView};
 
-pub struct PropertyViewState {
-    pub selected: Option<usize>,
-}
-
-pub struct NavigationViewState {
-    pub selected: Option<usize>,
-}
-
-trait PopupViewStateSection {
-    // fn bind_to_view(&mut self, view: &Box<dyn View<ViewData = Self::ViewStateData>>);
-    fn select(&mut self, index: Option<usize>);
-    fn select_next(&mut self);
-    fn select_previous(&mut self);
-    fn selected(&self) -> Option<usize>;
-}
-
-pub struct PopupViewState {
-    pub selected: Option<usize>,
-}
-
-impl Default for PopupViewState {
-	fn default() -> Self {
-		PopupViewState {
-			selected: None,
-		}
-	}
-}
-
-
-impl PopupViewState {
-    pub const fn select(&mut self, index: Option<usize>) {
-        self.selected = index;
-    }
-
-    pub fn select_next(&mut self) {
-		let next = self.selected.map_or(0, |i| i.saturating_add(1));
-		self.select(Some(next));
-    }
-
-    pub fn select_previous(&mut self) {
-        let previous = self.selected.map_or(usize::MAX, |i| i.saturating_sub(1));
-        self.select(Some(previous));
-    }
-
-	pub fn handle_secleceted(&mut self, views: Vec<&mut dyn ViewState>) {
-		let size = views.len();
-
-		if self.selected.is_some_and(|s| s >= size) {
-			self.select(Some(size.saturating_sub(1)));
-		}
-
-		for (index, state) in views.into_iter().enumerate() {
-			match self.selected {
-				Some(id) => {
-					state.mark_selected(id == index);
-				},
-				None => {
-					state.mark_selected(false);
-				}
-			};
-		
-		}
-	}
-}
+use super::base::view_state::ViewState;
 
 #[derive(Debug, Clone, Default)]
 pub struct PopupData {
@@ -95,7 +32,7 @@ pub struct PopupData {
 
 pub struct PopupView {
     data: PopupData,
-    state: PopupViewState,
+    state: ViewState,
     properties: Vec<PropertyView>,
     buttons: Vec<ButtonView>
 }
@@ -112,7 +49,7 @@ impl PopupView {
         self.data = data.clone();
         self.properties.clear();
         for property_data in &data.properties {
-            self.properties.push(PropertyView::new(property_data));
+            self.properties.push(PropertyView::new(property_data.clone()));
         }
 
         self.state.select(Some(0));
@@ -157,7 +94,7 @@ impl Default for PopupView {
     fn default() -> Self {
         let mut view = PopupView {
             data: PopupData::default(),
-            state: PopupViewState::default(),
+            state: ViewState::default(),
             properties: vec![],
             buttons: vec![
 				ButtonView::new(ButtonData{
@@ -179,44 +116,13 @@ impl View for PopupView {
     type ViewData = PopupData;
 
     fn render_data(&mut self, area: Rect, buf: &mut Buffer, data: &Self::ViewData) {
-        let popup_block = Block::default()
-            .borders(Borders::ALL)
-            .title(
-                Line::styled(
-                    format!(" {} ", data.title.to_uppercase()),
-                    Style::default()
-                        .fg(styles::POPUP_TITLE_COLOR)
-                        .add_modifier(Modifier::BOLD),
-                )
-            )
-            .border_style(
-                Style::default()
-                    .fg(styles::POPUP_BORDER_COLOR)
-            )
-            .style(
-                Style::default()
-                    .bg(styles::POPUP_BG)
-                    .fg(styles::POPUP_TEXT_COLOR)
-            );
-
-        let inner = popup_block.inner(area);
-        popup_block.render(area, buf);
-
-        let property_areas = Layout::horizontal(vec![
-            Constraint::Fill(1);
-            data.properties.len()
-        ]).split(inner);
-
-        for (property_data, property_area) in data.properties.iter().zip(property_areas.iter())
-        {
-            let mut property_view = PropertyView::new(property_data);
-            property_view.render(*property_area, buf);
-        }
+		self.set_data(data);
+		self.render(area, buf);
     }
 
     fn render(&mut self, area: Rect, buf: &mut Buffer) {
-        let data = self.data.clone();
-        self.render_data(area, buf, &data);
+        // let data = self.data.clone();
+        // self.render_data(area, buf, &data);
     }
 
     fn render_frame(&mut self, frame: &mut Frame, area: Rect) {
@@ -255,18 +161,6 @@ impl View for PopupView {
             Constraint::Percentage(20)
         ]).areas(inner);
 
-		let views_states: Vec<&mut dyn ViewState> = self.properties
-			.iter_mut()
-			.map(|view| view as &mut dyn ViewState)
-			.chain(
-				self.buttons
-					.iter_mut()
-					.map(|view| view as &mut dyn ViewState)
-			)
-			.collect();
-
-		self.state.handle_secleceted(views_states);
-
         let property_areas = Layout::vertical(vec![
             Constraint::Fill(1);
             self.properties.len()
@@ -278,7 +172,7 @@ impl View for PopupView {
 
         let button_areas = Layout::horizontal(vec![
             Constraint::Fill(1);
-            self.properties.len()
+            self.buttons.len()
         ]).split(buttons_area);
 
         for (button_view, button_area) in self.buttons.iter_mut().zip(button_areas.iter()) {
@@ -288,7 +182,7 @@ impl View for PopupView {
     }
 }
 
-impl ViewState for PopupView {
+impl ViewStateController for PopupView {
     fn mark_selected(&mut self, is_selected: bool) {
     }
 
@@ -297,7 +191,7 @@ impl ViewState for PopupView {
 			Some(id) => {
 				match self.properties.get_mut(id) {
 					Some(view) => {
-						let view_state = view as &mut dyn ViewState;
+						let view_state = view as &mut dyn ViewStateController;
 						let result = view_state.handle_key(key);
 						if view.get_mode() == Some(EInputMode::Editing) {
 							return result;
@@ -307,7 +201,7 @@ impl ViewState for PopupView {
 						let button_id = id - self.properties.len();
 						match self.buttons.get_mut(button_id) {
 							Some(view) => {
-								let view_state = view as &mut dyn ViewState;
+								let view_state = view as &mut dyn ViewStateController;
 								let request = view_state.handle_key(key);
 								match request.clone() {
 									Ok(Request::Button(_)) => {
@@ -333,6 +227,18 @@ impl ViewState for PopupView {
             _ => {
             }
         }
+
+		let views_states: Vec<&mut dyn ViewStateController> = self.properties
+			.iter_mut()
+			.map(|view| view as &mut dyn ViewStateController)
+			.chain(
+				self.buttons
+					.iter_mut()
+					.map(|view| view as &mut dyn ViewStateController)
+			)
+			.collect();
+
+		self.state.handle_secleceted(views_states);
 
         Ok(Request::Nothing)
     }

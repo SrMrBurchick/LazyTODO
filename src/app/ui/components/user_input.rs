@@ -2,7 +2,7 @@ use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::app::{events::{DatabaseResponse, HistoryRequest, Request, Response}, ui::{components::base::component::Component, sections::ESectionId}};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EInputMode {
     Normal,
     Editing,
@@ -22,6 +22,19 @@ impl Default for UserInputComponent {
 }
 
 impl UserInputComponent {
+	pub fn create(data: &String) -> Self {
+		UserInputComponent {
+			mode: EInputMode::Normal,
+			data: data.clone(),
+			cursor_position: 0
+		}
+	}
+	
+    pub fn set_data(&mut self, data: String) {
+        self.data = data;
+		// self.cursor_position = self.data.len();
+    }
+
     pub fn get_data(&self) -> String {
         self.data.clone()
     }
@@ -130,7 +143,7 @@ impl Component for UserInputComponent {
             }
         }
 
-        Ok(Request::Nothing)
+        Ok(Request::Input(Some(self.mode.clone())))
     }
 
     fn handle_response(&mut self, response: Response) {

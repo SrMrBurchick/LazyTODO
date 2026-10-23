@@ -1,6 +1,6 @@
 use crossterm::event::{KeyCode, KeyEvent};
 
-use crate::app::{base::TargetInfo, events::{ButtonRequest, DatabaseRequest, DatabaseResponse, HistoryRequest, PopupResponse, Request, Response}, ui::{components::base::component::Component, sections::ESectionId, views::{base::view::{View, ViewState}, popup_view::{PopupData, PopupView}}}};
+use crate::app::{base::TargetInfo, events::{ButtonRequest, DatabaseRequest, DatabaseResponse, HistoryRequest, PopupResponse, Request, Response}, ui::{components::base::component::Component, sections::ESectionId, views::{base::view::{View, ViewStateController}, popup_view::{PopupData, PopupView}}}};
 
 pub struct PopupComponent {
     view: PopupView,
@@ -25,7 +25,7 @@ impl Component for PopupComponent {
 
     fn handle_key(&mut self, key: KeyEvent) -> Result<Request, String> {
         if self.view.has_focused_property() {
-			let view_state = &mut self.view as &mut dyn ViewState;
+			let view_state = &mut self.view as &mut dyn ViewStateController;
 			view_state.handle_key(key);
             return Ok(Request::Nothing)
         }
@@ -35,7 +35,7 @@ impl Component for PopupComponent {
                 self.active = false;
             },
             _ => {
-				let view_state = &mut self.view as &mut dyn ViewState;
+				let view_state = &mut self.view as &mut dyn ViewStateController;
                 match view_state.handle_key(key) {
 					Ok(Request::Button(button_request)) => {
 						match button_request {
