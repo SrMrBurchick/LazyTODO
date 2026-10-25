@@ -126,57 +126,83 @@ impl View for PopupView {
     }
 
     fn render_frame(&mut self, frame: &mut Frame, area: Rect) {
+        // Prefer the reference's compact width, retaining space on small terminals.
+        let width = ((u32::from(area.width) * 62 / 100) as u16)
+            .max(48)
+            .min(area.width);
+        let field_heights: Vec<u16> = self.properties.iter().map(|property| {
+            if property.data.label.trim_end_matches(':').eq_ignore_ascii_case("description") {
+                6
+            } else {
+                4
+            }
+        }).collect();
+        let body_height = field_heights.iter().copied().sum::<u16>()
+            + self.properties.len().saturating_sub(1) as u16;
+        let height = body_height.saturating_add(10).min(area.height);
         let centered_area = area.centered(
-            Constraint::Percentage(60),
-            Constraint::Percentage(60),
+            Constraint::Length(width),
+            Constraint::Length(height),
         );
 
         frame.render_widget(Clear, centered_area);
-
-        let popup_block = Block::default()
-            .borders(Borders::ALL)
-            .title(
-                Line::styled(
-                    format!(" {} ", self.data.title.to_uppercase()),
-                    Style::default()
-                        .fg(styles::POPUP_TITLE_COLOR)
-                        .add_modifier(Modifier::BOLD),
-                )
-            )
-            .border_style(
-                Style::default()
-                    .fg(styles::SELECTED_SECTION_COLOR)
-            )
-            .style(
-                Style::default()
-                    .bg(styles::POPUP_BG)
-                    .fg(styles::POPUP_TEXT_COLOR)
-            );
-
+        let popup_block = Block::bordered()
+            .border_style(Style::default().fg(styles::POPUP_BORDER_COLOR))
+            .style(Style::default().bg(styles::POPUP_BG).fg(styles::POPUP_TEXT_COLOR));
         let inner = popup_block.inner(centered_area);
-        popup_block.render(centered_area, frame.buffer_mut());
+        frame.render_widget(popup_block, centered_area);
 
-        let [data_area, buttons_area] = Layout::vertical([
+        let [header, body, actions] = Layout::vertical([
+            Constraint::Length(2),
             Constraint::Fill(1),
-            Constraint::Percentage(20)
+            Constraint::Length(4),
         ]).areas(inner);
+        frame.render_widget(
+            Paragraph::new(Line::styled(
+                format!(" {}", self.data.title.to_uppercase()),
+                Style::default().fg(styles::POPUP_TITLE_COLOR).add_modifier(Modifier::BOLD),
+            )).block(Block::new().borders(Borders::BOTTOM)
+                .border_style(Style::default().fg(styles::PROPERTY_BORDER_COLOR))),
+            header,
+        );
 
-        let property_areas = Layout::vertical(vec![
-            Constraint::Fill(1);
-            self.properties.len()
-        ]).split(data_area);
-
-        for (property_view, property_area) in self.properties.iter_mut().zip(property_areas.iter()) {
-            property_view.render_frame(frame, *property_area);
+        let body = body.inner(ratatui::layout::Margin::new(1, 1));
+        let mut constraints = Vec::new();
+        for (index, height) in field_heights.iter().enumerate() {
+            if index > 0 {
+                constraints.push(Constraint::Length(1));
+            }
+            constraints.push(Constraint::Length(*height));
+        }
+        let property_areas = Layout::vertical(constraints).split(body);
+        for (index, property) in self.properties.iter_mut().enumerate() {
+            property.render_frame(frame, property_areas[index * 2]);
         }
 
-        let button_areas = Layout::horizontal(vec![
-            Constraint::Fill(1);
-            self.buttons.len()
-        ]).split(buttons_area);
-
-        for (button_view, button_area) in self.buttons.iter_mut().zip(button_areas.iter()) {
-            button_view.render_frame(frame, *button_area);
+        let action_block = Block::new().borders(Borders::TOP)
+            .border_style(Style::default().fg(styles::PROPERTY_BORDER_COLOR));
+        let action_inner = action_block.inner(actions);
+        frame.render_widget(action_block, actions);
+        let [hint, cancel, _gap, confirm] = Layout::horizontal([
+            Constraint::Fill(1),
+            Constraint::Length(10),
+            Constraint::Length(1),
+            Constraint::Length(11),
+        ]).areas(action_inner.inner(ratatui::layout::Margin::new(1, 0)));
+        let hint_text = if self.has_focused_property() {
+            "Enter/Esc finish editing"
+        } else if hint.width >= 38 {
+            "j/k navigate · i edit · Enter activate"
+        } else {
+            "j/k · i edit · Enter"
+        };
+        if hint.width >= hint_text.chars().count() as u16 + 1 {
+            let hint_line = Rect { y: hint.y.saturating_add(1), height: hint.height.saturating_sub(1), ..hint };
+            frame.render_widget(Paragraph::new(hint_text)
+                .style(Style::default().fg(styles::DESCRIPTION_FG_COLOR)), hint_line);
+        }
+        for (button, button_area) in self.buttons.iter_mut().zip([cancel, confirm]) {
+            button.render_frame(frame, button_area);
         }
 
     }

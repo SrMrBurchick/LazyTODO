@@ -3,104 +3,203 @@ use ratatui::{
     text::{Line, Span},
     widgets::ListItem,
 };
+use tracing::info;
+use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
 use crate::app::base::projects::Project;
 use crate::app::base::tasks::{ETaskState, SubTask, Task};
 
-// Main UI
+//
+// BASE PALETTE
+//
+
+// Background hierarchy
+pub const BG_ROOT: Color =
+    Color::Rgb(8, 12, 16);
+
+pub const BG_PANEL: Color =
+    Color::Rgb(12, 18, 24);
+
+pub const BG_PANEL_ALT: Color =
+    Color::Rgb(15, 22, 29);
+
+pub const BG_SURFACE: Color =
+    Color::Rgb(17, 25, 33);
+
+pub const BG_SELECTED: Color =
+    Color::Rgb(28, 43, 53);
+
+// Borders
+pub const BORDER_DIM: Color =
+    Color::Rgb(30, 47, 58);
+
+pub const BORDER_NORMAL: Color =
+    Color::Rgb(40, 61, 73);
+
+pub const BORDER_ACTIVE: Color =
+    Color::Rgb(78, 117, 137);
+
+// Text
+pub const TEXT_PRIMARY: Color =
+    Color::Rgb(202, 214, 221);
+
+pub const TEXT_SECONDARY: Color =
+    Color::Rgb(142, 160, 171);
+
+pub const TEXT_MUTED: Color =
+    Color::Rgb(100, 117, 128);
+
+pub const TEXT_DISABLED: Color =
+    Color::Rgb(74, 88, 97);
+
+// Main cyberpunk accent
+pub const ACCENT_PRIMARY: Color =
+    Color::Rgb(112, 164, 186);
+
+pub const ACCENT_BRIGHT: Color =
+    Color::Rgb(145, 194, 214);
+
+// Semantic colors
+pub const STATUS_TODO: Color =
+    Color::Rgb(104, 126, 137);
+
+pub const STATUS_ACTIVE: Color =
+    Color::Rgb(201, 179, 122);
+
+pub const STATUS_COMPLETED: Color =
+    Color::Rgb(118, 170, 148);
+
+pub const STATUS_ERROR: Color =
+    Color::Rgb(190, 108, 112);
+
+
+//
+// MAIN UI
+//
+
+pub const APP_BG: Color = BG_ROOT;
+
+pub const MAIN_MUTED_COLOR: Color = TEXT_MUTED;
+
 pub const TODO_HEADER_STYLE: Style = Style::new()
-    .fg(Color::Rgb(145, 174, 190))
-    .bg(Color::Rgb(12, 15, 18));
+    .fg(ACCENT_PRIMARY)
+    .bg(BG_PANEL);
 
 pub const SELECTED_STYLE: Style = Style::new()
-    .fg(Color::Rgb(218, 228, 234))
-    .bg(Color::Rgb(32, 43, 51))
+    .fg(TEXT_PRIMARY)
+    .bg(BG_SELECTED)
     .add_modifier(Modifier::BOLD);
 
-// Selected section
 pub const SELECTED_SECTION_COLOR: Color =
-    Color::Rgb(72, 102, 118);
+    BORDER_ACTIVE;
 
-// Rows
+
+//
+// ROWS
+//
+
 pub const NORMAL_ROW_BG: Color =
-    Color::Rgb(15, 18, 22);
+    BG_PANEL;
 
 pub const ALT_ROW_BG_COLOR: Color =
-    Color::Rgb(18, 22, 27);
+    BG_PANEL_ALT;
 
-// Text hierarchy
+
+//
+// TEXT HIERARCHY
+//
+
 pub const TITLE_FG_COLOR: Color =
-    Color::Rgb(196, 207, 214);
+    TEXT_PRIMARY;
 
 pub const DESCRIPTION_FG_COLOR: Color =
-    Color::Rgb(112, 126, 136);
+    TEXT_MUTED;
 
 pub const COMPLETED_TEXT_FG_COLOR: Color =
-    Color::Rgb(120, 136, 145);
+    TEXT_SECONDARY;
 
-// Status marks
+
+//
+// STATUS
+//
+
 pub const TODO_MARK_FG_COLOR: Color =
-    Color::Rgb(104, 126, 137);
+    STATUS_TODO;
 
 pub const COMPLETED_MARK_FG_COLOR: Color =
-    Color::Rgb(124, 170, 150);
+    STATUS_COMPLETED;
 
 pub const IN_PROGRESS_MARK_FG_COLOR: Color =
-    Color::Rgb(201, 179, 122);
+    STATUS_ACTIVE;
 
-// Inspector / metrics
+
+//
+// INSPECTOR / METRICS
+//
+
 pub const METRIC_CARD_BG: Color =
-    Color::Rgb(17, 24, 29);
+    BG_SURFACE;
 
 pub const METRIC_BORDER_COLOR: Color =
-    Color::Rgb(30, 42, 49);
+    BORDER_DIM;
 
 pub const METRIC_LABEL_COLOR: Color =
-    Color::Rgb(104, 126, 137);
+    TEXT_MUTED;
 
 pub const METRIC_VALUE_COLOR: Color =
-    Color::Rgb(218, 228, 234);
+    TEXT_PRIMARY;
 
 pub const METRIC_HIGHLIGHT_COLOR: Color =
-    Color::Rgb(124, 247, 196);
+    ACCENT_BRIGHT;
 
 pub const PROGRESS_TRACK_BG: Color =
-    Color::Rgb(23, 33, 40);
+    BG_PANEL_ALT;
 
-// Property / input
+
+//
+// PROPERTY / INPUT
+//
+
 pub const PROPERTY_BG: Color =
-    Color::Rgb(14, 19, 23);
+    BG_SURFACE;
 
 pub const PROPERTY_BORDER_COLOR: Color =
-    Color::Rgb(30, 42, 49);
+    BORDER_DIM;
 
 pub const PROPERTY_SELECTED_BORDER_COLOR: Color =
-    Color::Rgb(72, 102, 118);
+    BORDER_ACTIVE;
 
 pub const PROPERTY_EDITING_BORDER_COLOR: Color =
-    Color::Rgb(201, 179, 122);
+    STATUS_ACTIVE;
 
 pub const PROPERTY_LABEL_COLOR: Color =
-    Color::Rgb(104, 126, 137);
+    ACCENT_PRIMARY;
 
 pub const PROPERTY_VALUE_COLOR: Color =
-    Color::Rgb(196, 207, 214);
+    TEXT_PRIMARY;
 
 pub const PROPERTY_READ_ONLY_COLOR: Color =
-    Color::Rgb(88, 103, 112);
+    TEXT_DISABLED;
 
-// Popup
+
+//
+// POPUP
+//
+
 pub const POPUP_BG: Color =
-    Color::Rgb(12, 16, 20);
+    BG_PANEL;
 
 pub const POPUP_BORDER_COLOR: Color =
-    Color::Rgb(54, 74, 86);
+    BORDER_ACTIVE;
 
 pub const POPUP_TITLE_COLOR: Color =
-    Color::Rgb(145, 174, 190);
+    ACCENT_PRIMARY;
 
 pub const POPUP_TEXT_COLOR: Color =
-    Color::Rgb(196, 207, 214);
+    TEXT_PRIMARY;
+
+pub const POPUP_SELECTED_BG: Color =
+    BG_SELECTED;
 
 impl<'a> From<&'a Project> for ListItem<'a> {
     fn from(value: &'a Project) -> Self {
@@ -152,7 +251,7 @@ impl<'a> From<&'a Task> for ListItem<'a> {
 
             Line::styled(
                 format!("   {}", value.description),
-                Style::default().fg(DESCRIPTION_FG_COLOR),
+                Style::default().fg(MAIN_MUTED_COLOR),
             ),
         ])
     }
@@ -178,7 +277,7 @@ impl<'a> From<&'a SubTask> for ListItem<'a> {
             ),
         };
 
-        ListItem::new(
+        ListItem::new(vec![
             Line::from(vec![
                 Span::styled(
                     format!("{prefix} "),
@@ -191,7 +290,51 @@ impl<'a> From<&'a SubTask> for ListItem<'a> {
                         .fg(title_color)
                         .add_modifier(Modifier::BOLD),
                 ),
-            ])
-        )
+            ]),
+
+            Line::styled(
+                format!("   {}", value.description),
+                Style::default().fg(MAIN_MUTED_COLOR),
+            ),
+        ])
     }
+}
+
+pub fn wrap_lines(data: &str, max_width: usize) -> Vec<String> {
+    if max_width == 0 {
+        return vec![String::new()];
+    }
+
+    let mut lines = Vec::new();
+    let mut current_line = String::new();
+    let mut current_width = 0;
+
+    for ch in data.chars() {
+        if ch == '\n' {
+            lines.push(current_line);
+            current_line = String::new();
+            current_width = 0;
+            continue;
+        }
+
+        let char_width = unicode_width::UnicodeWidthChar::width(ch)
+            .unwrap_or(0);
+
+        if current_width + char_width > max_width {
+            lines.push(current_line);
+            current_line = String::new();
+            current_width = 0;
+        }
+
+        current_line.push(ch);
+        current_width += char_width;
+    }
+
+    lines.push(current_line);
+
+    lines
+}
+
+pub fn get_ui_width(data: &str) -> usize {
+	UnicodeWidthStr::width(data)
 }

@@ -81,7 +81,7 @@ impl InspectorView {
 			PropertyView::new(PropertyData {
 				label: match data.identity.clone() {
 					Some((_, _)) => {
-						format!("Descritpion")
+						format!("Description")
 					},
 					_=> "SPACES".to_string()
 				},
@@ -173,6 +173,11 @@ impl View for InspectorView {
 				let metrics_height = if self.metrics.is_empty() { 0 } else { 4 };
 				let progress_height = if self.progress.is_some() { 4 } else { 0 };
 
+                // Bound the form; extra terminal height stays below the compact cards.
+                let separator_height = u16::from(inner.height >= 20);
+                let header_height = inner.height
+                    .saturating_sub(1 + metrics_height + progress_height + separator_height)
+                    .min(12);
 				let [
 					breadcrumb_area,
 					header_area,
@@ -181,12 +186,12 @@ impl View for InspectorView {
 					progress_area,
 					_remaining,
 				] = Layout::vertical([
-					Constraint::Length(2),
-					Constraint::Min(3),
 					Constraint::Length(1),
+					Constraint::Length(header_height),
+					Constraint::Length(separator_height),
 					Constraint::Length(metrics_height),
 					Constraint::Length(progress_height),
-					Constraint::Min(0),
+					Constraint::Fill(1),
 				]).areas(inner);
 
 				//
@@ -214,14 +219,15 @@ impl View for InspectorView {
 					));
 				}
 
-				frame.render_widget(Paragraph::new(Line::from(breadcrumb_spans))
-					.wrap(Wrap { trim: true }), breadcrumb_area);
+				frame.render_widget(Paragraph::new(Line::from(breadcrumb_spans)), breadcrumb_area);
 
 				if !self.properties.is_empty() {
-					let property_areas = Layout::vertical(vec![
-						Constraint::Fill(1);
-						self.properties.len()
-					]).split(header_area);
+					let [name_area, _gap, description_area] = Layout::vertical([
+                        Constraint::Length(4),
+                        Constraint::Length(u16::from(header_area.height >= 10)),
+                        Constraint::Fill(1),
+                    ]).areas(header_area);
+                    let property_areas = [name_area, description_area];
 
 					for (property_view, property_area) in self.properties.iter_mut().zip(property_areas.iter())
 					{
@@ -243,7 +249,7 @@ impl View for InspectorView {
 					let metric_areas = Layout::horizontal(vec![
 						Constraint::Fill(1);
 						data.metrics.len()
-					]).split(metrics_area);
+					]).spacing(1).split(metrics_area);
 
 					for (metric_view, metric_area) in self.metrics.iter_mut().zip(metric_areas.iter())
 					{

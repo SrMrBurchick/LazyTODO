@@ -1,8 +1,14 @@
 use std::{fmt::{self, Display}, sync::mpsc::RecvTimeoutError};
 
 use crossterm::event::KeyCode;
-use ratatui::widgets::ListItem;
 use tracing::info;
+use ratatui::{
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
+    widgets::ListItem,
+};
+
+use crate::app::ui::styles::*;
 
 use crate::app::{base::Target, events::{DatabaseRequest, DatabaseResponse, Request, SelectionRequest, event_listener::EventsListener}, ui::{views::list_view::ListViewItem}};
 
@@ -165,8 +171,53 @@ impl ListViewItem for SubTask {
         format!("{}", self.title)
     }
 
-    fn render(&self) -> ListItem<'_> {
-        ListItem::from(self)
+    fn render(&self, size: u16) -> ListItem<'_> {
+        let (prefix, prefix_color, title_color) = match self.state {
+            ETaskState::Completed => (
+                "✓",
+                COMPLETED_MARK_FG_COLOR,
+                COMPLETED_TEXT_FG_COLOR,
+            ),
+            ETaskState::InProgress => (
+                "◐",
+                IN_PROGRESS_MARK_FG_COLOR,
+                TITLE_FG_COLOR,
+            ),
+            _ => (
+                "☐",
+                TODO_MARK_FG_COLOR,
+                TITLE_FG_COLOR,
+            ),
+        };
+
+        let mut lines: Vec<Line> = vec![];
+		let mut title_lines: Vec<Span> = vec![
+			Span::styled(
+				format!("{prefix} "),
+				Style::default().fg(prefix_color),
+			)
+		];
+
+		for line in wrap_lines(self.title.as_str(), size as usize) {
+			title_lines.push(Span::styled(
+				self.title.as_str(),
+				Style::default()
+					.fg(title_color)
+					.add_modifier(Modifier::BOLD),
+			));
+		}
+
+		lines.push(Line::from(title_lines));
+
+		// for line in wrap_lines(self.description.as_str(), size as usize) {
+		// 	lines.push(
+		// 		Line::styled(
+		// 			format!("   {}", line),
+		// 			Style::default().fg(MAIN_MUTED_COLOR),
+		// 	));
+		// }
+		
+		return ListItem::new(lines);
     }
 
     fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
@@ -205,8 +256,53 @@ impl ListViewItem for Task {
         format!("{}", self.title)
     }
 
-    fn render(&self) -> ListItem<'_> {
-        ListItem::from(self)
+    fn render(&self, size: u16) -> ListItem<'_> {
+        let (prefix, prefix_color, title_color) = match self.state {
+            ETaskState::Completed => (
+                "✓",
+                COMPLETED_MARK_FG_COLOR,
+                COMPLETED_TEXT_FG_COLOR,
+            ),
+            ETaskState::InProgress => (
+                "◐",
+                IN_PROGRESS_MARK_FG_COLOR,
+                TITLE_FG_COLOR,
+            ),
+            _ => (
+                "☐",
+                TODO_MARK_FG_COLOR,
+                TITLE_FG_COLOR,
+            ),
+        };
+
+        let mut lines: Vec<Line> = vec![];
+		let mut title_lines: Vec<Span> = vec![
+			Span::styled(
+				format!("{prefix} "),
+				Style::default().fg(prefix_color),
+			)
+		];
+
+		for line in wrap_lines(self.title.as_str(), size as usize) {
+			title_lines.push(Span::styled(
+				self.title.as_str(),
+				Style::default()
+					.fg(title_color)
+					.add_modifier(Modifier::BOLD),
+			));
+		}
+
+		lines.push(Line::from(title_lines));
+
+		// for line in wrap_lines(self.description.as_str(), size as usize) {
+		// 	lines.push(
+		// 		Line::styled(
+		// 			format!("   {}", line),
+		// 			Style::default().fg(MAIN_MUTED_COLOR),
+		// 	));
+		// }
+		
+		return ListItem::new(lines);
     }
 
     fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {

@@ -40,7 +40,7 @@ impl ListViewItem for Project {
         format!("{}", self.title)
     }
 
-    fn render(&self) -> ListItem<'_> {
+    fn render(&self, size: u16) -> ListItem<'_> {
         ListItem::from(self)
     }
 

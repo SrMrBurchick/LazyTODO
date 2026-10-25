@@ -9,7 +9,6 @@ use ratatui::widgets::{
     StatefulWidget, Widget, Wrap,
 };
 use ratatui::{DefaultTerminal, symbols};
-
 use crate::app::events::{Request, Response};
 use crate::app::ui::styles;
 use crate::app::ui::views::base::view::{self, View, ViewStateController};
@@ -17,7 +16,7 @@ use crate::app::ui::views::base::view::{self, View, ViewStateController};
 
 pub trait ListViewItem {
     fn display(&self) -> String;
-    fn render(&self) -> ListItem<'_>;
+    fn render(&self, size: u16) -> ListItem<'_>;
     fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<Request, String>;
     fn mark_selected(&self) -> Result<Request, String>;
 }
@@ -135,10 +134,10 @@ impl View for ListView {
 
     fn render_data(&mut self, area: Rect, buf: &mut Buffer, data: &Self::ViewData) {
         let block = Block::new()
-            .title(Line::raw(self.title.as_str()).centered())
+            .title(Line::styled(format!(" {} ", self.title.to_uppercase()), styles::TODO_HEADER_STYLE).centered())
             .borders(Borders::ALL)
-            .border_set(symbols::border::EMPTY)
-            .border_style(styles::TODO_HEADER_STYLE)
+            .border_style(Style::default().fg(if self.selected { styles::SELECTED_SECTION_COLOR } else { styles::METRIC_BORDER_COLOR }))
+            .padding(Padding::horizontal(1))
             .bg(styles::NORMAL_ROW_BG);
 
         // Iterate through all elements in the `items` and stylize them.
@@ -146,17 +145,16 @@ impl View for ListView {
             .iter()
             .enumerate()
             .map(|(i, item)| {
-                item.render().bg(alternate_colors(i))
+                item.render(area.width.saturating_sub(4)).bg(alternate_colors(i))
             })
             .collect();
 
-        // // Create a List from all list items and highlight the currently selected one
+        // Create a List from all list items and highlight the currently selected one
         let list = List::new(items)
             .block(block)
             .highlight_style(styles::SELECTED_STYLE)
             .highlight_symbol(">")
             .highlight_spacing(HighlightSpacing::Always);
-
 
         // We need to disambiguate this trait method as both `Widget` and `StatefulWidget` share the
         // same method name `render`.
@@ -182,7 +180,7 @@ impl View for ListView {
             .iter()
             .enumerate()
             .map(|(i, item)| {
-                item.render().bg(alternate_colors(i))
+                item.render(area.width.saturating_sub(4)).bg(alternate_colors(i))
             })
             .collect();
 

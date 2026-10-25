@@ -1,6 +1,6 @@
 use crossterm::event::{KeyCode, KeyEvent};
 
-use crate::app::{events::{DatabaseResponse, HistoryRequest, Request, Response}, ui::{components::base::component::Component, sections::ESectionId}};
+use crate::app::{events::{DatabaseResponse, HistoryRequest, Request, Response}, ui::{components::base::component::Component, sections::ESectionId, styles::{get_ui_width, wrap_lines}}};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EInputMode {
@@ -12,7 +12,8 @@ pub enum EInputMode {
 pub struct UserInputComponent {
     mode: EInputMode,
     data: String,
-    cursor_position: usize
+    cursor_position: usize,
+	max_width: usize
 }
 
 impl Default for UserInputComponent {
@@ -26,14 +27,21 @@ impl UserInputComponent {
 		UserInputComponent {
 			mode: EInputMode::Normal,
 			data: data.clone(),
-			cursor_position: 0
+			cursor_position: 0,
+			max_width: 0
 		}
 	}
 	
     pub fn set_data(&mut self, data: String) {
-        self.data = data;
-		// self.cursor_position = self.data.len();
+        self.data = data.clone();
+		self.cursor_position = self.clamp_cursor(self.data.chars().count());
     }
+
+	pub fn set_max_width(&mut self, width: usize) {
+		if self.max_width != width {
+			self.max_width = width;
+		}
+	}
 
     pub fn get_data(&self) -> String {
         self.data.clone()
@@ -112,7 +120,8 @@ impl Component for UserInputComponent {
         UserInputComponent {
             mode: EInputMode::Normal,
             data: String::default(),
-            cursor_position: 0
+            cursor_position: 0,
+			max_width: 0
         }
     }
 

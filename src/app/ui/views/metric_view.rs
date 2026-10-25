@@ -4,7 +4,7 @@ use ratatui::style::{Modifier, Style};
 use ratatui::{
     layout::{Constraint, Layout},
     text::Line,
-    widgets::{Block, Borders, Paragraph, Widget},
+    widgets::{Block, Borders, Padding, Paragraph, Widget},
 };
 
 use crate::app::events::Request;
@@ -37,7 +37,8 @@ impl View for MetricView {
         let block = Block::new()
             .borders(Borders::ALL)
             .border_style(Style::default().fg(styles::METRIC_BORDER_COLOR))
-            .style(Style::default().bg(styles::METRIC_CARD_BG));
+            .style(Style::default().bg(styles::METRIC_CARD_BG))
+            .padding(Padding::horizontal(u16::from(area.width >= 14)));
 
         let inner = block.inner(area);
 

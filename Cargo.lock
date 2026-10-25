@@ -18,6 +18,7 @@ dependencies = [
  "tracing-appender",
  "tracing-subscriber",
  "tui",
+ "unicode-width 0.2.2",
 ]
 
 [[package]]

@@ -69,7 +69,7 @@ impl ListViewItem for Space {
     fn display(&self) -> String {
         format!("{self}")
     }
-    fn render(&self) -> ratatui::widgets::ListItem<'_> {
+    fn render(&self, size: u16) -> ratatui::widgets::ListItem<'_> {
         ListItem::from(self)
     }
 

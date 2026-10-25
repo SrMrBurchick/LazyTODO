@@ -213,6 +213,7 @@ impl AppWidget {
     }
 
     fn render_frame(&mut self, area: Rect, frame: &mut Frame) {
+        frame.render_widget(Block::new().style(Style::default().bg(super::styles::APP_BG)), area);
         let layout = Layout::horizontal([
             Constraint::Percentage(20),
             Constraint::Percentage(50),

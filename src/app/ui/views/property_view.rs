@@ -10,10 +10,12 @@ use ratatui::{
 use tracing::info;
 
 use crate::app::events::Request;
-use crate::app::ui::styles;
+use crate::app::ui::styles::{self, get_ui_width, wrap_lines};
 use crate::app::ui::views::base::view::{View, ViewStateController};
 use crate::app::ui::components::base::component::Component;
 use crate::app::ui::components::user_input::{ UserInputComponent, EInputMode};
+
+use super::scroll_view::ScrollView;
 
 #[derive(Debug, Clone, Default)]
 pub struct PropertyData {
@@ -26,6 +28,7 @@ pub struct PropertyData {
 pub struct PropertyView {
     pub data: PropertyData,
     user_input: Option<UserInputComponent>,
+	scroll_view: ScrollView,
     selected: bool
 }
 
@@ -34,6 +37,7 @@ impl PropertyView {
         PropertyView {
             data: data.clone(),
             user_input: None,
+			scroll_view: ScrollView::new(),
             selected: false
         }
     }
@@ -63,12 +67,12 @@ impl View for PropertyView {
     fn render_frame(&mut self, frame: &mut Frame, area: Rect) {
         let [label_area, value_area] = Layout::vertical([
             Constraint::Length(1),
-            Constraint::Min(3),
+            Constraint::Fill(1),
         ])
             .areas(area);
 
         Paragraph::new(Line::styled(
-            format!("  {}", self.data.label.to_uppercase()),
+            self.data.label.trim_end_matches(':').to_uppercase(),
             Style::default()
                 .fg(styles::PROPERTY_LABEL_COLOR)
                 .add_modifier(Modifier::BOLD),
@@ -91,10 +95,6 @@ impl View for PropertyView {
 
         let title = if self.data.read_only {
             " READ ONLY "
-        } else if editing {
-            " EDITING "
-        } else if self.selected {
-            ""
         } else {
             ""
         };
@@ -128,51 +128,79 @@ impl View for PropertyView {
             styles::PROPERTY_VALUE_COLOR
         };
 
-        Paragraph::new(Line::styled(
-            value,
-            Style::default().fg(value_color),
-        ))
-            .block(input_block)
-			.wrap(ratatui::widgets::Wrap { trim: false })
-            .render(value_area, frame.buffer_mut());
+		let input_inner = input_block.inner(value_area);
+		let max_width = input_inner.width as usize;
 
-        match self.get_mode() {
-            Some(mode) => {
-                match mode {
-                    EInputMode::Normal => {}
-                    EInputMode::Editing => {
-                        match &self.user_input {
-                            Some(input) => {
-								let inner_width = value_area.width.saturating_sub(2) as usize;
+		if let Some(component) = &mut self.user_input {
+			component.set_max_width(max_width);
+		}
 
-								if inner_width > 0 {
-									let cursor = input.get_cursor_position();
-									info!("Cursor position: {cursor}");
+		let value_list = wrap_lines(
+			value.as_str(),
+			max_width,
+		);
 
-									let cursor_x = cursor % inner_width;
-									let cursor_y = cursor / inner_width;
+		let lines: Vec<Line> = value_list
+			.iter()
+			.map(|line| {
+				Line::styled(
+					line.clone(),
+					Style::default().fg(value_color),
+				)
+			})
+			.collect();
 
-									frame.set_cursor_position(Position::new(
-										value_area.x + cursor_x as u16 + 1,
-										value_area.y + cursor_y as u16 + 1,
-									));
-								}
-                                // frame.set_cursor_position(Position::new(
-                                //     value_area.x + input.get_cursor_position() as u16 + 1,
-                                //     value_area.y + 1,
-                                // ))
+		Paragraph::new(lines)
+			.block(input_block)
+			.scroll((self.scroll_view.get_scroll() as u16, 0))
+			.render(value_area, frame.buffer_mut());
 
-                            },
-                            None => {},
-                        }
-                    } ,
+		self.scroll_view.update(
+			value_list.len(),
+			input_inner.height as usize,
+		);
+		// self.scroll_view.render_frame(frame, input_inner);
 
-                    _ => {},
-                }
-            },
-            None => {},
-        }
+		if editing {
+			if let Some(input) = &self.user_input {
+				let cursor = input.get_cursor_position();
 
+				let text_before_cursor: String = input
+					.get_data()
+					.chars()
+					.take(cursor)
+					.collect();
+
+				let cursor_lines = wrap_lines(
+					text_before_cursor.as_str(),
+					max_width,
+				);
+
+				let cursor_y = cursor_lines
+					.len()
+					.saturating_sub(1);
+
+				self.scroll_view.track(cursor_y);
+
+				let cursor_x = cursor_lines
+					.last()
+					.map(|line| get_ui_width(line.as_str()))
+					.unwrap_or(0);
+
+				let visible_cursor_y =
+					self.scroll_view.get_visible_position(cursor_y);
+
+				frame.set_cursor_position(Position::new(
+					input_inner.x + cursor_x as u16,
+					input_inner.y + visible_cursor_y as u16,
+				));
+
+				// frame.set_cursor_position(Position::new(
+				// 	input_inner.x + cursor_x as u16,
+				// 	input_inner.y + cursor_y as u16,
+				// ))
+			}
+		}
     }
 }
 
@@ -201,6 +229,10 @@ impl ViewStateController for PropertyView {
 	}
 
 	fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
+		if self.get_mode() == Some(EInputMode::Editing) {
+			self.scroll_view.handle_key(key);
+		}
+
 		match &mut self.user_input {
 			Some(component) => {
 				if self.selected {

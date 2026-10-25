@@ -55,14 +55,14 @@ impl View for ButtonView {
     fn render_data(&mut self, area: Rect, buf: &mut Buffer, data: &Self::ViewData) {
         let block = Block::new()
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(if self.selected {styles::SELECTED_SECTION_COLOR} else {styles::METRIC_BORDER_COLOR}))
-            .style(Style::default().bg(styles::METRIC_CARD_BG));
+            .border_style(Style::default().fg(if self.selected {styles::PROPERTY_SELECTED_BORDER_COLOR} else {styles::PROPERTY_BORDER_COLOR}))
+            .style(Style::default().bg(if self.selected { styles::POPUP_SELECTED_BG } else { styles::POPUP_BG }));
 
         let inner = block.inner(area);
         block.render(area, buf);
         Paragraph::new(
-            Line::styled(data.value.as_str(), Style::default().fg(styles::METRIC_LABEL_COLOR))
-        ).render(inner, buf);
+            Line::styled(data.value.as_str(), Style::default().fg(styles::POPUP_TEXT_COLOR))
+        ).centered().render(inner, buf);
 
     }
 
