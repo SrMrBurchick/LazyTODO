@@ -1,6 +1,5 @@
 use crate::app::{
-    events::{DatabaseResponse, HistoryRequest, Response},
-    workers::base::worker::Worker,
+    events::{DatabaseResponse, HistoryRequest, Response}, managers::context_manager::ContextManager, workers::base::worker::Worker
 };
 use tracing::{error, info, warn};
 
@@ -20,7 +19,7 @@ impl HistoryWorker {
     pub fn save_response(&mut self, response: Response) {
         match &response {
             Response::Database(database_response) => match database_response {
-                DatabaseResponse::Updated(_, _, _) => {
+                DatabaseResponse::StateUpdated(_, _, _) => {
                     return;
                 }
                 DatabaseResponse::Info(_, _) => {
@@ -50,18 +49,24 @@ impl Worker for HistoryWorker {
 
     fn handle_request(&mut self, request: HistoryRequest) -> Result<Response, String> {
         match request {
-            HistoryRequest::GetPrevious => match self.history.pop() {
-                Some(response) => {
-                    self.active_response = Some(response.clone());
-                    return Ok(response);
-                }
-                None => match &self.active_response {
-                    Some(response) => {
-                        return Ok(response.clone());
-                    }
-                    None => {}
-                },
-            },
+            HistoryRequest::GetPrevious => {
+
+				match self.history.pop() {
+					Some(response) => {
+						ContextManager::get_mut().go_up();
+						self.active_response = Some(response.clone());
+						return Ok(response);
+					}
+					None => match &self.active_response {
+						Some(response) => {
+							ContextManager::get_mut().go_up();
+							return Ok(response.clone());
+						}
+						None => {}
+					},
+				}
+
+			},
             _ => {}
         }
         Ok(Response::Nothing)

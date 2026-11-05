@@ -764,6 +764,34 @@ impl Database {
         }
     }
 
+    pub fn update_poject(&self, id: i64, title: &str, description: &str) {
+        match &self.connection {
+            Some(connection) => {
+                match connection.prepare(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), env!("SQL_UPDATE_PROJECT")))) {
+                    Ok(mut statement) => {
+                        statement.bind((":targetId", id)).unwrap();
+                        statement.bind((":newTitle", title)).unwrap();
+                        statement.bind((":newDescription", description)).unwrap();
+                        match statement.next() {
+                            Ok(_) => {
+                                info!("Project {id} was updated successfully");
+                            },
+                            Err(e) => {
+                                error!("Failed to update project {id} {e}");
+                            },
+                        }
+                    },
+                    Err(e) => {
+                        error!("Failed to create statement {e}");
+                    },
+                }
+            },
+            None => {
+                error!("Invalid connection");
+            },
+        }
+    }
+
     pub fn update_task(&self, id: i64, title: &str, description: &str) {
         match &self.connection {
             Some(connection) => {

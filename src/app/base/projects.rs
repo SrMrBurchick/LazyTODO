@@ -3,8 +3,10 @@ use crossterm::event::KeyCode;
 use ratatui::widgets::ListItem;
 
 use crate::app::{
-    base::{Target, tasks::Task}, events::{DatabaseRequest, DatabaseResponse, Request, SelectionRequest, event_listener::EventsListener}, ui::views::list_view::ListViewItem
+    base::{tasks::Task, Target}, events::{event_listener::EventsListener, DatabaseRequest, DatabaseResponse, Request, SelectionRequest}, managers::context_manager::ContextManager, ui::views::list_view::ListViewItem
 };
+
+use super::Object;
 
 #[derive(Default, Debug, Clone)]
 pub struct Project {
@@ -18,6 +20,9 @@ impl Project {
     fn request() {
         //
     }
+}
+
+impl Object for Project {
 }
 
 impl fmt::Display for Project {
@@ -47,6 +52,7 @@ impl ListViewItem for Project {
     fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
         match key.code {
             KeyCode::Enter => {
+				ContextManager::get_mut().set_active_target(Some((Target::Task, -1, Some(self.id))));
                 Ok(Request::Database(DatabaseRequest::Get(Target::Task, Some(self.id))))
             }
             _ => {

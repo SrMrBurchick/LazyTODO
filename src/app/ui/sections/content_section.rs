@@ -15,6 +15,7 @@ use crate::app::base::projects::{Project, projects_to_widget_list};
 use crate::app::base::tasks::{SubTask, Task, sub_tasks_to_widget_list, tasks_to_widget_list};
 use crate::app::events::event_listener::EventsListener;
 use crate::app::events::{DatabaseResponse, Request};
+use crate::app::managers::context_manager::ContextManager;
 use crate::app::ui::sections::{ESectionId, ESubsectionId};
 use crate::app::ui::views::base::view::{View, ViewStateController};
 use crate::app::ui::views::list_view::ListViewItem;
@@ -58,65 +59,21 @@ impl Section for ContentSection {
         match response {
             Response::Database(database_response) => {
                 match database_response {
-                    DatabaseResponse::Tasks(project_id, tasks) => {
+                    DatabaseResponse::Tasks(project_id, _) => {
                         self.active_target = Some(Target::Task);
-                        self.tasks = tasks.clone();
                         self.sub_section = Some(ESubsectionId::Tasks(project_id.clone()));
                     },
-                    DatabaseResponse::SubTasks(task_id, tasks) => {
+                    DatabaseResponse::SubTasks(task_id, _) => {
                         self.active_target = Some(Target::SubTask);
-                        self.subtasks = tasks.clone();
                         self.sub_section = Some(ESubsectionId::SubTasks(task_id.clone()));
                     },
-                    DatabaseResponse::Projects(projects) => {
+                    DatabaseResponse::Projects(_) => {
                         self.active_target = Some(Target::Project);
-                        self.projects = projects.clone();
                         self.sub_section = Some(ESubsectionId::Projects);
                     },
-                    DatabaseResponse::All(projects, tasks) => {
+                    DatabaseResponse::All(_, _) => {
                         self.active_target = Some(Target::All);
-                        self.projects = projects.clone();
-                        self.tasks = tasks.clone();
                         self.sub_section = None;
-                    },
-                    DatabaseResponse::Updated(target, _, _) => {
-                        match &self.active_target {
-                            Some(_) => {
-                                for project in self.projects.iter_mut() {
-                                    match project.handle_response(database_response) {
-                                        Ok(request) => {
-                                            if request != Request::Nothing {
-                                                return Ok(request);
-                                            }
-                                        },
-                                        Err(_) => {},
-                                    }
-                                }
-                                for task in self.tasks.iter_mut() {
-                                    match task.handle_response(database_response) {
-                                        Ok(request) => {
-                                            if request != Request::Nothing {
-                                                return Ok(request);
-                                            }
-                                        },
-                                        Err(_) => {},
-                                    }
-                                }
-                                for subtask in self.subtasks.iter_mut() {
-                                    match subtask.handle_response(database_response) {
-                                        Ok(request) => {
-                                            if request != Request::Nothing {
-                                                return Ok(request);
-                                            }
-                                        },
-                                        Err(_) => {},
-                                    }
-                                }
-                            },
-                            None => {
-                            },
-                        }
-
                     },
                     _ => {
                     },
@@ -143,32 +100,15 @@ impl Section for ContentSection {
 
     fn render(&mut self, area: Rect, frame: &mut Frame) {
         // content
-        match &self.active_target {
-            Some(target) => {
-                let mut view_data: Vec<Box<dyn ListViewItem>> = vec![];
-                match target {
-                    Target::Task => {
-                        view_data = tasks_to_widget_list(&self.tasks);
-                    },
-                    Target::SubTask => {
-                        view_data = sub_tasks_to_widget_list(&self.subtasks);
-                    },
-                    Target::Project => {
-                        view_data = projects_to_widget_list(&self.projects);
-                    },
-                    Target::All => {
-                        view_data = projects_to_widget_list(&self.projects);
-                        view_data.extend(tasks_to_widget_list(&self.tasks));
-                    },
-                    _ => {},
-                }
-                self.view.set_items(view_data);
-            },
-            None => {
-                self.view.set_items(vec![]);
-            },
-        }
+        // match &self.active_target {
+        //     Some(target) => {
+		// 		self.view.set_items(ContextManager::get().get_target_list_view(target.clone()));
+        //     },
+        //     None => {
+        //     },
+        // }
 
+        self.view.set_items(ContextManager::get().get_active_taret_list_view());
         self.view.render(area, frame.buffer_mut());
     }
 

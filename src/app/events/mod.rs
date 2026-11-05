@@ -5,6 +5,7 @@ use crate::app::{base::{
 }, ui::views::popup_view::PopupData};
 
 use super::ui::components::user_input::EInputMode;
+use crate::app::base::Object;
 
 pub mod event_listener;
 
@@ -14,6 +15,7 @@ pub enum DatabaseRequest {
     GetInfo(Target, Option<i64>),
     Add(TargetInfo),
     UpdateState(Target, ETaskState, i64),
+    Update(TargetInfo),
     Delete(Target, i64),
 }
 
@@ -75,7 +77,8 @@ pub enum DatabaseResponse {
     Info(Option<i64>, TargetStatusInfo),
     SubTasks(Option<i64>, Vec<SubTask>),
     All(Vec<Project>, Vec<Task>),
-    Updated(Target, ETaskState, Option<i64>),
+    StateUpdated(Target, ETaskState, Option<i64>),
+	Updated(TargetInfo)
 }
 
 #[derive(Clone, Debug)]
@@ -127,7 +130,7 @@ impl fmt::Display for DatabaseResponse {
                     writeln!(f, "{task}")?;
                 }
             },
-            DatabaseResponse::Updated(target, state, id) => {
+            DatabaseResponse::StateUpdated(target, state, id) => {
                 writeln!(f, "{target} {state} {:?}", id)?;
             }
             _ => {

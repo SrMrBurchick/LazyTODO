@@ -5,15 +5,21 @@ use crate::{
 };
 
 use tokio::sync::mpsc;
+use tracing::info;
+use std::sync::Arc;
+
+use super::managers::context_manager::ContextManager;
 
 pub struct App {
     config: Config,
+	// context_manager: ContextManager
 }
 
 impl App {
     pub fn new() -> App {
         App {
             config: Config::new(),
+			// context_manager: ContextManager::new()
         }
     }
 
@@ -60,6 +66,8 @@ impl App {
         let mut database = Database::default();
         database.initialize();
 
+		ContextManager::get_mut().init(database.get_projects().unwrap_or(vec![]), database.get_tasks(None).unwrap_or(vec![]));
+
         let mut database_worker = DatabaseWorker::new(database);
         let mut history_worker = HistoryWorker::new();
         let mut popup_worker = PopupWorker::new();
@@ -70,6 +78,7 @@ impl App {
                     match database_worker.handle_request(db_request) {
                         Ok(response) => {
                             history_worker.save_response(response.clone());
+							ContextManager::get_mut().handle_response(response.clone());
                             tx.send(response).await;
                         },
                         Err(_) => {},

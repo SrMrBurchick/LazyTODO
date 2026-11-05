@@ -85,16 +85,31 @@ impl Worker for DatabaseWorker {
                 match target {
                     Target::Task => {
                         self.database.update_task_state(id, new_state.clone());
-                        return Ok(Response::Database(DatabaseResponse::Updated(target, new_state, Some(id))));
+                        return Ok(Response::Database(DatabaseResponse::StateUpdated(target, new_state, Some(id))));
                     }
                     Target::SubTask => {
                         self.database.update_sub_task_state(id, new_state.clone());
-                        return Ok(Response::Database(DatabaseResponse::Updated(target, new_state, Some(id))));
+                        return Ok(Response::Database(DatabaseResponse::StateUpdated(target, new_state, Some(id))));
                     }
                     _ => {},
                 }
                 Ok(Response::Nothing)
             }
+			DatabaseRequest::Update(target_info) => {
+				match &target_info {
+					TargetInfo::Project(id, title, description) => {
+						self.database.update_poject(id.unwrap(), title.as_str(), description.as_str());
+					}
+					TargetInfo::Task(id, title, description, _, _) => {
+						self.database.update_task(id.unwrap(), title.as_str(), description.as_str());
+					}
+					TargetInfo::SubTask(id, title, description, _, _, _, _) => {
+						self.database.update_sub_task(id.unwrap(), title.as_str(), description.as_str());
+					}
+					_=> {}
+				}
+                Ok(Response::Database(DatabaseResponse::Updated(target_info)))
+			}
             DatabaseRequest::Add(target) => {
                 match target {
                     TargetInfo::Project(_, name, description) => {

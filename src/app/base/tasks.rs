@@ -8,9 +8,11 @@ use ratatui::{
     widgets::ListItem,
 };
 
-use crate::app::ui::styles::*;
+use crate::app::{managers::context_manager::ContextManager, ui::styles::*};
 
 use crate::app::{base::Target, events::{DatabaseRequest, DatabaseResponse, Request, SelectionRequest, event_listener::EventsListener}, ui::{views::list_view::ListViewItem}};
+
+use super::Object;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ETaskState {
@@ -42,7 +44,7 @@ impl EventsListener for SubTask {
     type WorkerResponse = DatabaseResponse;
     fn handle_response(&mut self, response: &Self::WorkerResponse) -> Result<Request, String> {
         match response {
-            DatabaseResponse::Updated(target, state, id) => {
+            DatabaseResponse::StateUpdated(target, state, id) => {
                 if *target == Target::SubTask {
                     match id {
                         Some(subtask_id) => {
@@ -60,7 +62,6 @@ impl EventsListener for SubTask {
         Ok(Request::Nothing)
     }
 }
-
 
 impl Default for SubTask {
     fn default() -> Self {
@@ -92,7 +93,7 @@ impl EventsListener for Task {
 
     fn handle_response(&mut self, response: &Self::WorkerResponse) -> Result<Request, String> {
         match response {
-            DatabaseResponse::Updated(target, state, id) => {
+            DatabaseResponse::StateUpdated(target, state, id) => {
                 if *target == Target::Task {
                     match id {
                         Some(task_id) => {
@@ -209,14 +210,6 @@ impl ListViewItem for SubTask {
 
 		lines.push(Line::from(title_lines));
 
-		// for line in wrap_lines(self.description.as_str(), size as usize) {
-		// 	lines.push(
-		// 		Line::styled(
-		// 			format!("   {}", line),
-		// 			Style::default().fg(MAIN_MUTED_COLOR),
-		// 	));
-		// }
-		
 		return ListItem::new(lines);
     }
 
@@ -246,6 +239,7 @@ impl ListViewItem for SubTask {
     }
 
     fn mark_selected(&self) -> Result<Request, String> {
+		ContextManager::get_mut().set_focused_target(Some((Target::SubTask, self.id, Some(self.parent_task_id))));
         Ok(Request::Database(DatabaseRequest::GetInfo(Target::SubTask, Some(self.id))))
     }
 
@@ -294,20 +288,13 @@ impl ListViewItem for Task {
 
 		lines.push(Line::from(title_lines));
 
-		// for line in wrap_lines(self.description.as_str(), size as usize) {
-		// 	lines.push(
-		// 		Line::styled(
-		// 			format!("   {}", line),
-		// 			Style::default().fg(MAIN_MUTED_COLOR),
-		// 	));
-		// }
-		
 		return ListItem::new(lines);
     }
 
     fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> Result<crate::app::events::Request, String> {
         match key.code {
             KeyCode::Enter => {
+				ContextManager::get_mut().set_active_target(Some((Target::SubTask, self.id, self.project_id)));
                 return Ok(Request::Database(DatabaseRequest::Get(Target::SubTask, Some(self.id))));
             }
             // KeyCode::Left => {
@@ -342,8 +329,15 @@ impl ListViewItem for Task {
     }
 
     fn mark_selected(&self) -> Result<Request, String> {
+		ContextManager::get_mut().set_focused_target(Some((Target::Task, self.id, self.project_id)));
         Ok(Request::Database(DatabaseRequest::GetInfo(Target::Task, Some(self.id))))
     }
+}
+
+impl Object for Task {
+}
+
+impl Object for SubTask {
 }
 
 pub fn tasks_to_widget_list(tasks: &Vec<Task>) -> Vec<Box<dyn ListViewItem>> {

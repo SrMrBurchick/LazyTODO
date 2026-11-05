@@ -11,6 +11,7 @@ use ratatui::{Frame, symbols};
 
 use crate::app::base::Target;
 use crate::app::events::{DatabaseRequest, Request};
+use crate::app::managers::context_manager::ContextManager;
 use crate::app::ui::sections::ESectionId;
 use crate::app::ui::views::base::view::{View, ViewStateController};
 use crate::app::ui::views::list_view::ListViewItem;
@@ -78,42 +79,41 @@ impl ListViewItem for Space {
             KeyCode::Enter => {
                 match self.space_type {
                     ESpaces::Home => {
-                        return Ok(Request::Database(DatabaseRequest::Get(Target::All, None)));
+						ContextManager::get_mut().set_active_target(Some((Target::All, -1, None)));
                     },
                     ESpaces::Projects => {
-                        return Ok(Request::Database(DatabaseRequest::Get(Target::Project, None)));
+						ContextManager::get_mut().set_active_target(Some((Target::Project, -1, None)));
                     },
                     ESpaces::Standalone => {
-                        return Ok(Request::Database(DatabaseRequest::Get(Target::Task, None)));
+						ContextManager::get_mut().set_active_target(Some((Target::Task, -1, None)));
                     }
                     _ => {
-                        Ok(Request::Nothing)
                     },
                 }
             }
             _ => {
-                Ok(Request::Nothing)
             }
         }
+
+        Ok(Request::Nothing)
     }
 
     fn mark_selected(&self) -> Result<Request, String> {
         match self.space_type {
             ESpaces::Home => {
-                return Ok(Request::Database(DatabaseRequest::GetInfo(Target::All, None)));
+				ContextManager::get_mut().set_focused_target(Some((Target::All, -1, None)));
             },
             ESpaces::Projects => {
-                return Ok(Request::Database(DatabaseRequest::GetInfo(Target::Project, None)));
+				ContextManager::get_mut().set_focused_target(Some((Target::Project, -1, None)));
             },
             ESpaces::Standalone => {
-                return Ok(Request::Database(DatabaseRequest::GetInfo(Target::Task, None)));
+				ContextManager::get_mut().set_focused_target(Some((Target::Task, -1, None)));
             }
             _ => {
-                Ok(Request::Nothing)
             },
         }
 
-        // Ok(Request::Nothing)
+        Ok(Request::Nothing)
     }
 }
 

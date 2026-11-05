@@ -34,6 +34,24 @@ pub struct InspectorData {
     pub identity: Option<(Target, i64)>
 }
 
+impl InspectorData {
+	pub fn create_request(&self) -> Result<Request, String> {
+		match &self.identity {
+			Some((target, id)) => {
+				match target {
+					Target::Project => {
+						
+					}
+					_=> {}
+				}
+			}
+			_=> {
+			}
+		}
+		Ok(Request::Nothing)
+	}
+}
+
 pub struct InspectorView {
     data: Option<InspectorData>,
 	state: ViewState,
@@ -61,7 +79,17 @@ impl InspectorView {
         self.data = None;
     }
 
-    pub fn set_data(&mut self, data: &InspectorData) {
+    pub fn set_data(&mut self, data: &InspectorData) -> Option<InspectorData> {
+		// Check for data update
+		let mut prev_data: Option<InspectorData> = None;
+		for property in &self.properties {
+			if property.has_changed_data() {
+				prev_data = self.data.clone();
+				break;
+			}
+		}
+
+		// Reset data
         self.data = Some(data.clone());
 
 		// Init child views
@@ -90,35 +118,6 @@ impl InspectorView {
 			}),
 		];
 
-				// //
-				// // Description
-				// //
-				// Paragraph::new(data.item_description.as_str())
-				// 	.style(Style::default().fg(styles::TITLE_FG_COLOR))
-				// 	.wrap(Wrap { trim: true })
-				// 	.render(description_area, buf);
-
-				// let status_name = match &data.item_status {
-				// 	Some(ETaskState::Todo) => Some("TODO"),
-				// 	Some(ETaskState::InProgress) => Some("IN PROGRESS"),
-				// 	Some(ETaskState::Completed) => Some("COMPLETED"),
-				// 	None => None,
-				// };
-
-				// let type_text = match status_name {
-				// 	Some(status) => {
-				// 		format!("{target_name} · {status}")
-				// 	}
-
-				// 	None => {
-				// 		target_name.to_string()
-				// 	}
-				// };
-
-				// Paragraph::new(type_text)
-				// 	.style(Style::default().fg(styles::TODO_HEADER_STYLE.fg.unwrap_or(styles::TITLE_FG_COLOR)))
-				// 	.render(type_area, buf);
-
 		self.metrics.clear();
 		self.progress = None;
         //
@@ -134,6 +133,8 @@ impl InspectorView {
         if let Some(progress) = &data.progress {
 			self.progress = Some(MetricBarView::new(progress));
         }
+
+		prev_data
     }
 
     fn handle_navigation(&mut self, key: crossterm::event::KeyEvent)  -> Result<crate::app::events::Request, String> {

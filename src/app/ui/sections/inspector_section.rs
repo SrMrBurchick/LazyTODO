@@ -1,7 +1,8 @@
 use ratatui::Frame;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use crate::app::events::{DatabaseResponse, Request};
+use crate::app::base::TargetInfo;
+use crate::app::events::{DatabaseRequest, DatabaseResponse, Request};
 use crate::app::ui::sections::ESectionId;
 use crate::app::ui::views::base::view::{View, ViewStateController};
 use crate::app::ui::views::inspector_view::{InspectorData, InspectorView};
@@ -38,7 +39,19 @@ impl Section for InspectorSection {
                     DatabaseResponse::Info(_, info) => {
                         match InspectorData::try_from(info.clone()) {
                             Ok(data) => {
-                                self.view.set_data(&data);
+                                match self.view.set_data(&data) {
+									Some(updated_data) => {
+										match TargetInfo::try_from(updated_data) {
+											Ok(traget_info) => {
+												return Ok(Request::Database(DatabaseRequest::Update(traget_info)));
+											}
+											_=> {}
+										}
+									}
+									_ => {
+										
+									}
+								}
                             },
                             Err(_) => {},
                         }

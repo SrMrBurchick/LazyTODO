@@ -3,6 +3,10 @@ use std::fmt;
 pub mod projects;
 pub mod tasks;
 
+pub trait Object {
+	
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Target {
     Project,
@@ -161,4 +165,33 @@ impl TryFrom<TargetStatusInfo> for InspectorData {
         }
     }
 
+}
+
+
+impl TryFrom<InspectorData> for TargetInfo {
+    type Error = String;
+
+	fn try_from(value: InspectorData) -> Result<Self, Self::Error> {
+		match value.identity {
+			Some((target, id)) => {
+				match target {
+					Target::Project => {
+						Ok(TargetInfo::Project(Some(id), value.item_name, value.item_description))
+					}
+					Target::Task => {
+						Ok(TargetInfo::Task(Some(id), value.item_name, value.item_description, None, None))
+					}
+					Target::SubTask => {
+						Ok(TargetInfo::SubTask(Some(id), value.item_name, value.item_description, -1, String::default(), None, None))
+					}
+					_=> {
+						Err(format!("Uknown target"))
+					}
+				}
+			}
+			_=> {
+				Err(format!("Uknownm identity"))
+			}
+		}
+	}
 }

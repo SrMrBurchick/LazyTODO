@@ -11,7 +11,8 @@ pub enum EInputMode {
 #[derive(Debug, Clone)]
 pub struct UserInputComponent {
     mode: EInputMode,
-    data: String,
+    current_data: String,
+    original_data: String,
     cursor_position: usize,
 	max_width: usize
 }
@@ -26,15 +27,17 @@ impl UserInputComponent {
 	pub fn create(data: &String) -> Self {
 		UserInputComponent {
 			mode: EInputMode::Normal,
-			data: data.clone(),
+			current_data: data.clone(),
+			original_data: data.clone(),
 			cursor_position: 0,
 			max_width: 0
 		}
 	}
 	
     pub fn set_data(&mut self, data: String) {
-        self.data = data.clone();
-		self.cursor_position = self.clamp_cursor(self.data.chars().count());
+        self.current_data = data.clone();
+		self.original_data = data.clone();
+		self.cursor_position = self.clamp_cursor(self.current_data.chars().count());
     }
 
 	pub fn set_max_width(&mut self, width: usize) {
@@ -44,7 +47,7 @@ impl UserInputComponent {
 	}
 
     pub fn get_data(&self) -> String {
-        self.data.clone()
+        self.current_data.clone()
     }
 
     pub fn get_mode(&self) -> EInputMode {
@@ -61,16 +64,16 @@ impl UserInputComponent {
 
     fn update_data(&mut self, data: char) {
         let index = self.byte_index();
-        self.data.insert(index, data);
+        self.current_data.insert(index, data);
         self.move_cursor_right();
     }
 
     fn byte_index(&self) -> usize {
-        self.data
+        self.current_data
             .char_indices()
             .map(|(i, _)| i)
             .nth(self.cursor_position)
-            .unwrap_or(self.data.len())
+            .unwrap_or(self.current_data.len())
     }
 
     fn move_cursor_left(&mut self) {
@@ -84,7 +87,7 @@ impl UserInputComponent {
     }
 
     fn clamp_cursor(&self, new_cursor_pos: usize) -> usize {
-        new_cursor_pos.clamp(0, self.data.chars().count())
+        new_cursor_pos.clamp(0, self.current_data.chars().count())
     }
 
     const fn reset_cursor(&mut self) {
@@ -102,16 +105,20 @@ impl UserInputComponent {
             let from_left_to_current_index = current_index - 1;
 
             // Getting all characters before the selected character.
-            let before_char_to_delete = self.data.chars().take(from_left_to_current_index);
+            let before_char_to_delete = self.current_data.chars().take(from_left_to_current_index);
             // Getting all characters after selected character.
-            let after_char_to_delete = self.data.chars().skip(current_index);
+            let after_char_to_delete = self.current_data.chars().skip(current_index);
 
             // Put all characters together except the selected one.
             // By leaving the selected one out, it is forgotten and therefore deleted.
-            self.data = before_char_to_delete.chain(after_char_to_delete).collect();
+            self.current_data = before_char_to_delete.chain(after_char_to_delete).collect();
             self.move_cursor_left();
         }
     }
+
+	pub fn is_data_updated(&self) -> bool {
+		!(self.current_data == self.original_data)
+	}
 
 }
 
@@ -119,7 +126,8 @@ impl Component for UserInputComponent {
     fn new() -> Self {
         UserInputComponent {
             mode: EInputMode::Normal,
-            data: String::default(),
+            current_data: String::default(),
+			original_data: String::default(),
             cursor_position: 0,
 			max_width: 0
         }

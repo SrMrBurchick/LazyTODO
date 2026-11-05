@@ -4,13 +4,14 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::palette::tailwind::{BLUE, GREEN, SLATE};
 use ratatui::style::{Color, Modifier, Style, Stylize};
-use ratatui::text::Line;
+use ratatui::text::{Line, Span};
 use ratatui::widgets::{
     Block, Borders, HighlightSpacing, List, ListItem, ListState, Padding, Paragraph,
     StatefulWidget, Widget, Wrap,
 };
 use ratatui::{DefaultTerminal, Frame, symbols};
 use tokio::sync::mpsc;
+use tracing::info;
 
 use crate::app::base::Target;
 use crate::app::base::projects::Project;
@@ -29,6 +30,7 @@ use crossterm::event::{Event, EventStream};
 use futures::StreamExt;
 
 use super::components::user_input::EInputMode;
+use super::styles;
 
 pub struct AppWidget {
     sections: Vec<Box<dyn Section>>,
@@ -191,20 +193,88 @@ impl AppWidget {
 		self.handle_sections_input(key).await;
     }
 
-    fn render_header(area: Rect, buf: &mut Buffer) {
-        Paragraph::new(format!("TODO: Section name here"))
-            .bold()
-            .centered()
-            .render(area, buf);
-    }
+	fn render_header(area: Rect, buf: &mut Buffer) {
+		let [left, right] = Layout::horizontal([
+			Constraint::Fill(1),
+			Constraint::Length(28),
+		])
+			.areas(area);
 
-    fn render_footer(area: Rect, buf: &mut Buffer) {
-		let title = env!("CARGO_PKG_NAME");
-		let version = env!("CARGO_PKG_VERSION");
-		Paragraph::new(format!("{title} {version}"))
-		.centered()
-		.render(area, buf);
-    }
+		Paragraph::new(
+			Line::styled(
+				" LAZYTODO",
+				Style::default()
+					.fg(styles::ACCENT_BRIGHT)
+					.add_modifier(Modifier::BOLD),
+			)
+		)
+			.style(Style::default().bg(styles::BG_PANEL))
+			.render(left, buf);
+
+		Paragraph::new(Line::from(vec![
+			Span::styled(
+				"NORMAL",
+				Style::default().fg(styles::ACCENT_PRIMARY),
+			),
+			Span::styled(
+				"  DB:LOCAL ",
+				Style::default().fg(styles::TEXT_MUTED),
+			),
+		]))
+			.right_aligned()
+			.style(Style::default().bg(styles::BG_PANEL))
+			.render(right, buf);
+	}
+
+	fn render_footer(area: Rect, buf: &mut Buffer) {
+		let [left, right] = Layout::horizontal([
+			Constraint::Fill(1),
+			Constraint::Length(20),
+		])
+			.areas(area);
+
+		Paragraph::new(Line::from(vec![
+			Span::styled(
+				" q ",
+				Style::default().fg(styles::ACCENT_PRIMARY),
+			),
+			Span::styled(
+				"QUIT ",
+				Style::default().fg(styles::TEXT_MUTED),
+			),
+			Span::styled(
+				"ENTER ",
+				Style::default().fg(styles::ACCENT_PRIMARY),
+			),
+			Span::styled(
+				"OPEN ",
+				Style::default().fg(styles::TEXT_MUTED),
+			),
+			Span::styled(
+				"CTRL+N ",
+				Style::default().fg(styles::ACCENT_PRIMARY),
+			),
+			Span::styled(
+				"NEW",
+				Style::default().fg(styles::TEXT_MUTED),
+			),
+		]))
+			.style(Style::default().bg(styles::BG_PANEL))
+			.render(left, buf);
+
+		Paragraph::new(format!(
+			"{} v{} ",
+			env!("CARGO_PKG_NAME"),
+			env!("CARGO_PKG_VERSION")
+		))
+			.right_aligned()
+			.style(
+				Style::default()
+					.fg(styles::TEXT_DISABLED)
+					.bg(styles::BG_PANEL),
+			)
+			.render(right, buf);
+	}
 
     fn render_popup(&mut self, area: Rect, frame: &mut Frame) {
         if self.popup_component.is_active() {
@@ -214,13 +284,23 @@ impl AppWidget {
 
     fn render_frame(&mut self, area: Rect, frame: &mut Frame) {
         frame.render_widget(Block::new().style(Style::default().bg(super::styles::APP_BG)), area);
+
+		let [header_area, body_area, footer_area] = Layout::vertical([
+			Constraint::Length(1),
+			Constraint::Fill(1),
+			Constraint::Length(1)
+		]).areas(area);
+
         let layout = Layout::horizontal([
             Constraint::Percentage(20),
             Constraint::Percentage(50),
             Constraint::Percentage(30),
         ]);
 
-        let areas = layout.split(area);
+		AppWidget::render_header(header_area, frame.buffer_mut());
+		AppWidget::render_footer(footer_area, frame.buffer_mut());
+
+        let areas = layout.split(body_area);
         for (section, area) in self.sections.iter_mut().zip(areas.iter()) {
             section.render(*area, frame);
         }

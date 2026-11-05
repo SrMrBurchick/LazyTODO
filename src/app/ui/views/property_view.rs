@@ -53,6 +53,17 @@ impl PropertyView {
 
         None
     }
+
+	pub fn has_changed_data(&self) -> bool {
+		match &self.user_input {
+			Some(component) => {
+				component.is_data_updated()
+			}
+			_=> {
+				false
+			}
+		}
+	}
 }
 
 impl View for PropertyView {
@@ -68,16 +79,26 @@ impl View for PropertyView {
         let [label_area, value_area] = Layout::vertical([
             Constraint::Length(1),
             Constraint::Fill(1),
-        ])
-            .areas(area);
+        ]).areas(area);
+
+		let data_updated: bool;
+		let mut label: String = self.data.label.trim_end_matches(':').to_uppercase();
+
+		match &self.user_input {
+			Some(component) => {
+				data_updated = component.is_data_updated();
+			}
+			_=> {
+				data_updated = false;
+			}
+		}
 
         Paragraph::new(Line::styled(
-            self.data.label.trim_end_matches(':').to_uppercase(),
+            label,
             Style::default()
                 .fg(styles::PROPERTY_LABEL_COLOR)
                 .add_modifier(Modifier::BOLD),
-        ))
-            .render(label_area, frame.buffer_mut());
+        )).render(label_area, frame.buffer_mut());
 
         let editing = self.selected
         && self
@@ -96,7 +117,11 @@ impl View for PropertyView {
         let title = if self.data.read_only {
             " READ ONLY "
         } else {
-            ""
+			if data_updated {
+				"UPDATED*"
+			} else {
+				""
+			}
         };
 
         let title_color = if editing {
